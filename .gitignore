@@ -1,0 +1,28 @@
+# The Obsidian vault is a junction - it is NOT part of this repo
+vault/
+
+# Projects are their own repositories - tracked by projects/INDEX.md, not by this repo
+projects/*
+!projects/_template/
+!projects/README.md
+!projects/INDEX.md
+
+# Secrets - never
+.env
+**/.env
+*.pem
+*.key
+
+# ECC is installed, not authored here
+.claude/
+.agents/
+
+# Volatile
+raw/scratch/
+raw/query-output/
+comms/
+node_modules/
+__pycache__/
+.venv/
+.DS_Store
+Thumbs.db

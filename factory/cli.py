@@ -6,7 +6,7 @@ It does not push, deploy, delete user projects, or manage credentials.
 from __future__ import annotations
 
 import argparse
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from datetime import datetime, timezone
 import json
 import os
@@ -54,6 +54,14 @@ def connect():
     );
     ''')
     return db
+
+
+@contextmanager
+def managed_connect():
+    """Commit/rollback and always close SQLite connections, including on Windows."""
+    with closing(connect()) as db:
+        with db:
+            yield db
 
 
 def event(db, task_id, label, info=''):
@@ -358,7 +366,7 @@ def main(argv=None):
     parser=build_parser()
     args=parser.parse_args(argv)
     try:
-        with connect() as db:
+        with managed_connect() as db:
             if args.command == 'create': create(db,args)
             elif args.command == 'run': run_pipeline(db,args)
             elif args.command == 'approve': approve(db,args)

@@ -2,15 +2,13 @@
 
 Copy this folder to start a new project:
 ```powershell
-Copy-Item -Recurse "aios/projects/_template" "aios/projects/<new-project-name>"
+Copy-Item -Recurse "projects/_template" "C:\Dev\projects\sample-service"
 ```
 
 ## First Steps (Before Writing Code!)
-1. `cd aios/projects/<new-project-name>`
-2. `git init`
-3. Create a new repository on GitHub (e.g. `gh repo create <new-project-name> --private`)
-4. `git remote add origin <remote-url>`
-5. Perform your initial commit: `git add . && git commit -m "chore: initial scaffold from aios template"`
-6. Push: `git push -u origin main`
-7. Add a row to `aios/projects/INDEX.md`.
-8. Create a matching vault note in `aios/vault/projects/<new-project-name>.md`.
+1. Select an owner-approved external location; the command above is an example only.
+2. Configure explicit policy paths in AGENTS.md; do not assume relative AIOS/vault paths.
+3. Define project-local requirements, architecture, backlog and verification commands.
+4. Review Git baseline, secret exclusions and recovery arrangements before implementation.
+5. Add a registry entry only when the owner selects this project.
+6. Follow the hybrid SDLC with build/release approvals. Repository initialization, commits, remote creation, vault edits and publication require separate authorization.

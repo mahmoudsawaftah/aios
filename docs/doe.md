@@ -77,33 +77,30 @@ A system that does not learn from failures decays. Whenever an agent encounters 
 3. Update the SOP in `directives/` with the new edge case
         │
         ▼
-4. Record durable constraint in `moevault/` (memory/ or projects/)
+4. Record durable constraints in authorized docs; external memory requires approval
         │
         ▼
-5. Commit and push `aios` standards
+5. Verify and review standards; commit/push only with explicit owner authorization
 ```
 
 > **The knowledge base is the deliverable.** A bug fix or lesson that exists only in a chat transcript did not happen. If you don't update the directives and vault memory, the next agent session will make the exact same mistake.
 
 ---
 
-## 4. Worked Example: WorkMerit Commercial Verification
+## 4. Worked Example: Generic Service Verification
 
-Here is how a real task from Moe's **AMG (WorkMerit)** project matures through the DOE lifecycle:
+Here is how an independent service verification task matures through the DOE lifecycle. Commands and dependencies come from that service, not factory defaults.
 
 ### Pass 1: Manual Improvisation (Fragile)
-The agent is asked to verify commercial readiness. It runs `npm run lint`, gets errors, forgets to check Cloudflare types, guesses the command for the assessment engine, runs an untested curl command, and leaves the workspace half-checked.
+The agent runs one check, misses an integration test, guesses an API command and leaves readiness unverified.
 
 ### Pass 2: Scripted Execution (`execution/check/`)
 We encapsulate the exact, deterministic verification commands into a single script:
-`projects/AMG/scripts/run-commercial-verification.ps1`.
+`<external-product-root>/scripts/verify-readiness.ps1`.
 Now, the agent runs one tested script that executes the complete verification sequence and outputs a clear PASS/FAIL summary.
 
 ### Pass 3: Full DOE System
-1. **Directive**: `projects/AMG/directives/commercial-readiness.md` defines:
-   - Required secrets: `SHKEEPER_BASE_URL`, `SHKEEPER_API_KEY`, `PAYMENT_ADMIN_TOKEN`.
-   - Pre-flight scripts to run.
-   - What to do if assessment tests fail.
-2. **Vault Note**: `moevault/projects/AMG.md` documents that commercial features require approval before activation.
-3. **Reminder**: A recurring check in `reminders/` to verify Shkeeper endpoint certificates.
-4. **Result**: Any agent can now reliably verify the project with zero improvisation.
+1. **Directive**: The product's readiness SOP defines safe test inputs, preflight checks, unit/integration commands and failure handling. Configuration remains product-local.
+2. **Architecture**: Record trusted server decisions, access boundaries and rollback constraints in the product's approved documentation.
+3. **Evidence**: Store actual QA/security outcomes and unresolved risks; optional external notes require authorization.
+4. **Result**: Any authorized role can repeat checks. Build/release approvals remain mandatory and release signoff never deploys.

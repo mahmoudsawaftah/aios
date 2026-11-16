@@ -1,9 +1,16 @@
-﻿# Project Registry
+# AIOS Project Registry
 
-This registry tracks all projects under `aios/projects/`.
-Even though the `aios` repository does not contain project code (each project is its own standalone Git repository), this file records where each repo lives, its purpose, and its status.
+This catalog has been reset for **AIOS Software Factory v2**.
 
-| Project | Remote | What it is | Structure | Status |
-|---|---|---|---|---|
-| AMG | https://github.com/danar-capital/AMG.git | WorkMerit bilingual assessment & credential platform | standard | active |
-| HR odoo | *** NO REMOTE - AT RISK *** | HRA Platform workforce & team management system | standard | active (backup needed) |
+No active client/product projects are registered in this control repository.
+Each real product must have its **own independent Git repository** outside AIOS.
+
+| Project | Repository | Owner | Methodology | Stage | Status |
+|---|---|---|---|---|---|
+| *(none yet)* | — | — | — | — | — |
+
+## Policy
+- Previous product registrations are retired. Original repositories and recovery data remain outside this registry's scope.
+- Register only projects explicitly chosen by the owner.
+- Never put credentials, production data, or local recovery exports in this repository.
+- Add new goals via `python -m factory.cli create` with a separate project Git repo.

@@ -1,3 +1,3 @@
 ﻿# Projects Registry & Workspace (projects/)
 
-Contains Moe's active code projects. Each subdirectory is an independent Git repository with its own remote, .env, and dependencies. Mapped by projects/INDEX.md.
+Contains only the owner-selected registry and optional template. Active product repositories live outside AIOS, with their own configuration, dependencies, Git history and recovery plans. Retired registrations never authorize modifying original repositories.

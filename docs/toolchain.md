@@ -45,7 +45,7 @@ It is installed project-scoped under `aios` so that your global user configurati
 
 ## 3. Ten Essential ECC Skills for Moe
 
-With 292 skills available, browsing the catalogue is overwhelming. Here are the 10 most relevant skills for your real projects (**Next.js**, **WorkMerit**, **HRA Platform**, **Cloudflare**):
+The following are optional web-stack examples, not factory requirements. Inspect each project's manifests and available skill instructions before selecting tools. Installation counts and versions above describe an earlier workstation snapshot, not required or verified current installations.
 
 1. **`nextjs-app-router`**: Best practices for Next.js Server Components, client boundaries, metadata, and dynamic routing.
 2. **`typescript-strict`**: Enforces strict typing, eliminates `any` types, and handles async inference safely.

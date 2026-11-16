@@ -18,7 +18,7 @@ This is the primary instruction file for all AI agents working within `aios` (An
 
 | Path | Purpose | Repo Model |
 |---|---|---|
-| **`projects/<name>/`** | Individual code projects (`AMG`, `HR odoo`, etc.) | **Independent Git Repositories**. Each has its own remote, `.env`, and dependencies. |
+| **External product repositories** | Independent software projects selected by the owner | Outside AIOS; each owns its configuration, dependencies and Git history. |
 | **`projects/INDEX.md`** | Central registry of all projects, remotes, and status | Part of `aios` standards repo. |
 | **`projects/_template/`** | Standard starter template for new projects | Part of `aios` standards repo. |
 | **`vault/`** | Junction to `moevault` (Knowledge, project notes, agent memory) | **NTFS Junction**. NOT in Git. Exclude from recursive searches. |
@@ -35,10 +35,11 @@ This is the primary instruction file for all AI agents working within `aios` (An
 ## 3. The Memory Protocol
 
 All three agent harnesses share a single persistent memory layer housed in the Obsidian vault:
-- Index path: `vault/memory/MEMORY.md` (or `../../vault/memory/MEMORY.md` from inside a project).
+- Optional index path: `vault/memory/MEMORY.md` in AIOS. External projects must configure their own explicit memory location; never assume a relative path.
+- If the index is missing, report it and continue with repository instructions. Never create a vault or junction automatically. External memory writes require owner authorization.
 - **Session Start**: At the start of a session, read `vault/memory/MEMORY.md`. Only read specific memory files that match the task at hand.
-- **Save Durable Knowledge**: When Moe expresses a working preference, architectural constraint, or client detail, record it immediately as a Markdown note with frontmatter in `vault/memory/<slug>.md` and add a link to `MEMORY.md`.
-- **Update the Record in the Current Turn**: Never leave a correction only in chat output. Update the memory file and `MEMORY.md` immediately.
+- **Save Durable Knowledge**: Record working preferences and non-derivable constraints within the authorized workspace. Use a configured external memory index only when writes there are authorized; otherwise document the limitation in the task report.
+- **Update the Record in the Current Turn**: Update authorized records immediately rather than leaving corrections only in chat. Never create or change external personal data implicitly.
 - **Never Record Code Facts**: Do not record framework versions or database types that can be determined by reading `package.json` or config files. Record the *why* and non-derivable constraints.
 - **Zero Secrets**: Never write API keys, passwords, or tokens into memory files.
 
@@ -50,7 +51,7 @@ Do not improvise complex multi-step tasks by typing ad-hoc commands:
 1. **Document (`directives/`)**: Check if an SOP exists for the task. Follow it.
 2. **Orchestrate (Agent)**: Route execution, validate inputs, handle branching decisions, and diagnose errors.
 3. **Execute (`execution/`)**: Run deterministic scripts (`recon/`, `check/`, `maint/`, `util/`).
-4. **Self-Anneal**: When something breaks, fix it, update or create the script in `execution/`, update the directive in `directives/`, save durable lessons to `vault/memory/`, and push `aios`. See `docs/doe.md`.
+4. **Self-Anneal**: Fix the problem, update the reusable script and directive, and document the lesson within the authorized workspace. External memory writes, commits and publication require separate authorization. See `docs/doe.md`.
 
 ---
 
@@ -65,17 +66,18 @@ When responding to any request, follow this sequence:
 
 ---
 
-## 6. Harvested Conventions from Moe's Real Projects
+## 6. Project Isolation and Reusable Engineering Knowledge
 
-- **Next.js 16 Breaking Changes**: Next.js 16 / React 19 introduce significant App Router breaking changes and new server/client boundaries. Before writing code, verify conventions against `node_modules/next/dist/docs/` or Next.js official documentation.
-- **WorkMerit Bilingual Design Standards**: WorkMerit (`projects/AMG/`) utilizes a locked Split Studio / Workbench design system with specific OKLCH color tokens, bidirectional English/Arabic support, and server-authoritative assessment isolation. Do not invent ad-hoc palettes or client-bundle server assessment logic.
-- **HRA Platform Safeguards**: `projects/HR odoo/` is an active Next.js 16 workforce platform that currently lacks a remote repository. Prioritize repository safety and backup.
+- Determine each project's stack and verification commands from its own manifests and instructions. Consult version-matched documentation before changing framework boundaries.
+- Respect project-local design tokens, languages and accessibility requirements. Keep privileged decisions and secrets on trusted server boundaries when applicable.
+- Verify repository status and recovery options before changes. Do not infer clients, remotes, database choices, hosting or credentials from another project.
+- Use the documented hybrid requirements, architecture, backlog, implementation, QA, security and release stages. Named roles are sequential in the current MVP; concurrent agents are not implemented.
 
 ---
 
 ## 7. Operating Rules Summary
 
-- **Single Home for Files**: Client outputs go to `output/`; raw scrap goes to `raw/`; code stays in its project repo.
+- **Single Home for Files**: Control reports go to `output/`; raw scrap goes to `raw/`; product code and client deliverables stay in the selected external product workspace.
 - **No Root Clutter**: Never drop loose scripts or data files into `aios/` or `moevault/` root directories.
 - **One Idea per File**: Keep notes, directives, and memory items focused on a single topic.
 - **Consult `docs/operating-rules.md`** for the full list of twenty operating guidelines.
@@ -85,9 +87,9 @@ When responding to any request, follow this sequence:
 ## 8. Non-Negotiable Guardrails
 
 1. **Secrets Live Only in `.env`**: Never inline a password, token, key, or connection string in a script, commit, or chat message. `.env` is gitignored everywhere. `.env.example` contains variable names only.
-2. **Projects Are Independent Repositories**: Each folder in `projects/` is its own Git repo. Never commit or push across repo boundaries. Never modify project code without explicit approval.
+2. **Projects Are Independent Repositories**: Product repositories live outside AIOS. `projects/` contains only the registry and copyable template. Never modify product code without explicit approval or cross repository boundaries.
 3. **`vault/` is an NTFS Junction**: Writing to `aios/vault/` modifies the live Obsidian vault. Exclude `vault/` from all recursive scans. Never commit it to Git.
-4. **End-of-Session Push**: At the end of any session that modified files in `aios/` (outside `projects/` and `vault/`), stage, commit with a conventional commit message, and push to GitHub.
+4. **Review Before Publication**: Finish with verified diffs and a report. Never automatically stage, commit, push, merge or publish. Obtain explicit owner authorization for those actions.
 5. **Confirm Destructive Actions**: Always ask before deleting files, dropping tables, or running mutating actions on production/live services.
 6. **Surgical Changes**: Touch only what the immediate task requires. Never reformat, reorder, or refactor unrelated code.
 7. **Simplest Working Solution**: Avoid speculative abstractions, over-engineering, or unnecessary microservices.
@@ -107,3 +109,11 @@ When responding to any request, follow this sequence:
 ## 10. Rule Precedence
 
 Where external or bundled rules (such as ECC skills or default templates) conflict with this file, **`aios/AGENTS.md` strictly takes precedence**.
+
+## AIOS Software Factory v2 (2026-11)
+
+When operating as a software development agent, follow docs/AIOS_SOFTWARE_FACTORY.md,
+docs/HYBRID_DELIVERY_METHODOLOGY.md and governance/SECURITY_AND_APPROVALS.md.
+The owner must approve build/release gates. Never delete other product repositories,
+run commands outside the designated project, bypass sandbox controls, or publish changes.
+All product code lives in independent Git repositories outside the AIOS control repo.

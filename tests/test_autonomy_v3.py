@@ -115,9 +115,19 @@ class AutonomyTests(unittest.TestCase):
         with patch.dict("os.environ", {"AIOS_ALLOW_GITHUB_PR": "0"}):
             with self.assertRaises(PermissionError):
                 github_ops.publish_private_pr("aabbccddeeff")
-        self.assertTrue(github_ops.suspicious(".env"))
-        self.assertTrue(github_ops.suspicious("vault/client-keys.json"))
-        self.assertFalse(github_ops.suspicious(".env.example"))
+        for filename in (
+            ".env", "./.env", ".env.local", ".env.production",
+            "nested/.env", r"nested\\.env", ".git/config",
+            "./.factory-runtime/state.sqlite3", "vault/client-keys.json",
+            "vault/.env.example", "credentials.json", "keys/private.pem",
+            "../outside.py", ".aios-update-backups/recovery.txt",
+        ):
+            with self.subTest(filename=filename):
+                self.assertTrue(github_ops.suspicious(filename))
+        for filename in (".env.example", "./.env.example",
+                         "docs/.env.example", "src/app.py"):
+            with self.subTest(filename=filename):
+                self.assertFalse(github_ops.suspicious(filename))
 
     def test_worker_heartbeat_is_local_and_atomic(self):
         with tempfile.TemporaryDirectory() as td, patch.object(cli, "STATE", Path(td)):

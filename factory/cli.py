@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 from contextlib import closing, contextmanager
 from datetime import datetime, timezone
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -62,6 +63,30 @@ def managed_connect():
     with closing(connect()) as db:
         with db:
             yield db
+
+
+def connect_readonly():
+    """Open the existing state database without creating or changing it."""
+    path = DB.resolve()
+    if not path.is_file():
+        raise FileNotFoundError('Factory state database does not exist.')
+    db = sqlite3.connect(path.as_uri() + '?mode=ro', uri=True, timeout=20)
+    db.row_factory = sqlite3.Row
+    db.execute('PRAGMA query_only=ON')
+    return db
+
+
+@contextmanager
+def managed_readonly_connect():
+    """Yield an enforced read-only connection and always close it."""
+    with closing(connect_readonly()) as db:
+        yield db
+
+
+def state_store_id() -> str:
+    """Return a stable, non-reversible diagnostic ID for the state DB path."""
+    canonical_uri = DB.resolve().as_uri().casefold()
+    return hashlib.sha256(canonical_uri.encode('utf-8')).hexdigest()[:16]
 
 
 def event(db, task_id, label, info=''):
@@ -121,16 +146,23 @@ def stage_prompt(row, stage, workdir: Path) -> str:
     role_path = ROOT / 'agents' / 'roles' / f'{stage}.md'
     role = role_path.read_text(encoding='utf-8')
     prior = []
-    for prev in STAGES[:STAGES.index(stage)]:
+    stage_index = STAGES.index(stage)
+    dependencies = []
+    for prev in STAGES[:stage_index]:
         p = log_path(row['id'],prev)
         if p.exists():
             # Keep context bounded; full outputs are retained on disk.
+            dependencies.append(prev)
             prior.append(f'### {prev}\n{p.read_text(encoding="utf-8",errors="replace")[-8000:]}')
     return f'''AIOS Software Factory — stage: {stage}
-Product repository: {row['project']}
-Assigned workspace (only writable root): {workdir}
+Task ID: {row['id']}
+Stage Name: {stage}
+Stage Index: {stage_index} (zero-based; stage {stage_index + 1} of {len(STAGES)})
+Project Path: {row['project']}
+Assigned Workspace: {workdir}
 Methodology: {row['methodology']}
-User goal: {row['goal']}
+Task Goal: {row['goal']}
+Stage Dependencies: {', '.join(dependencies) if dependencies else 'None'}
 
 MANDATORY POLICY:
 - Work only within the assigned workspace. No deletion of existing projects.
@@ -142,6 +174,7 @@ MANDATORY POLICY:
 - Clearly mark unknowns, risks, test evidence, and required owner decisions.
 - Do not claim tests passed if not actually executed.
 - This stage is constrained by Codex sandbox settings; do not attempt to bypass them.
+- The assigned Task ID and context above are authoritative; do not call list_tasks or get_task to rediscover them.
 
 ROLE CONTRACT:
 {role}

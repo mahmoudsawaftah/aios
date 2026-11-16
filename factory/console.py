@@ -199,6 +199,24 @@ def details_html(csrf: str, r: dict) -> str:
     if r["error"]:
         result += '<p class="err">' + escape(r["error"]) + '</p>'
     result += '</section>'
+    result += (
+        '<section class="panel detail-block"><div class="panel-head">'
+        '<h3>✦ أدوات المشروع</h3><span class="tag">LOCAL TOOLS</span></div>'
+        '<p class="hint">ابحث عن مشاريع GitHub مفتوحة المصدر، جهز مسودات التسويق، '
+        'أو افحص جاهزية مستودع GitHub. لا يتم النشر أو الإنفاق عبر هذه الأزرار.</p>'
+        '<form method="post" action="/ideas/' + escape(r["id"], quote=True)
+        + '/research">' + form_token(csrf)
+        + '<label>مصطلحات البحث (GitHub Public API)</label>'
+        '<input name="query" maxlength="150" placeholder="e.g. salon booking open source">'
+        '<button class="action" type="submit">⌕ بحث Open Source والتراخيص</button></form>'
+        '<form method="post" action="/ideas/' + escape(r["id"], quote=True)
+        + '/marketing">' + form_token(csrf)
+        + '<button class="action" type="submit">✦ تجهيز خطة تسويق ومسودات محتوى</button></form>'
+        '<form method="post" action="/ideas/' + escape(r["id"], quote=True)
+        + '/github-preflight">' + form_token(csrf)
+        + '<button class="action" type="submit">◈ فحص جاهزية GitHub PR</button></form>'
+        '</section>'
+    )
     if r["status"] == "WAITING_APPROVAL" and r["next_stage"] == "implementation":
         result += (
             '<section class="panel detail-block"><h3>⚠ موافقة مرحلة البناء</h3>'
@@ -336,6 +354,13 @@ class ConsoleHandler(BaseHTTPRequestHandler):
                 )
                 self._send(303, b"", {"Location": "/ideas/" + r["id"]})
                 return
+            for action in ("research", "marketing", "github-preflight"):
+                if path.startswith("/ideas/") and path.endswith("/" + action):
+                    task_id = path.removeprefix("/ideas/").removesuffix("/" + action).strip("/")
+                    from factory.actions import perform
+                    perform(task_id, action, fields.get("query", [""])[0])
+                    self._send(303, b"", {"Location": "/ideas/" + task_id})
+                    return
             if path.startswith("/ideas/") and path.endswith("/approve"):
                 tid = path.removeprefix("/ideas/").removesuffix("/approve").strip("/")
                 gate = fields.get("gate", [""])[0]
@@ -376,6 +401,10 @@ def main(argv=None):
         p.error("Port must be between 1024 and 65535")
     url = f"http://127.0.0.1:{args.port}/"
     if args.open_browser and console_already_running(args.port):
+        if args.auto_run:
+            print("Another Item Space AI console is already running. Stop it "
+                  "before enabling a new worker; no worker was started.", flush=True)
+            return 3
         webbrowser.open_new_tab(url)
         print("item space AI is already running. Opened existing dashboard.", flush=True)
         return 0

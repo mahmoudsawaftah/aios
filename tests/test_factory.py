@@ -68,6 +68,35 @@ class FactoryTests(unittest.TestCase):
                 cli.reset_stage(self.db,argparse.Namespace(id=self.id))
             self.assertEqual(cli.task(self.db,self.id)['attempt'],0)
 
+    def test_stage_prompt_contains_assigned_task_context_and_dependencies(self):
+        row = cli.task(self.db, self.id)
+        output = cli.log_path(self.id, 'discovery')
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text('Discovery handoff', encoding='utf-8')
+        prompt = cli.stage_prompt(row, 'requirements', self.project)
+        for expected in (
+            f'Task ID: {self.id}', 'Stage Name: requirements',
+            'Stage Index: 1 (zero-based; stage 2 of 8)',
+            f'Project Path: {self.project}', f'Assigned Workspace: {self.project}',
+            'Task Goal: Build a demo', 'Stage Dependencies: discovery',
+            '### discovery\nDiscovery handoff',
+            'do not call list_tasks or get_task to rediscover them',
+        ):
+            self.assertIn(expected, prompt)
+
+    def test_resume_after_interruption_reuses_task_without_duplication(self):
+        self.db.execute("UPDATE tasks SET stage_idx=2,status='INTERRUPTED',attempt=1 WHERE id=?",
+                        (self.id,))
+        self.db.commit()
+        with patch.object(cli, 'codex_stage', return_value='OK') as mock:
+            self.runner()
+        self.assertEqual([call.args[1] for call in mock.call_args_list],
+                         ['architecture', 'backlog'])
+        self.assertTrue(all(call.args[0]['id'] == self.id for call in mock.call_args_list))
+        self.assertEqual(self.db.execute('SELECT COUNT(*) FROM tasks').fetchone()[0], 1)
+        row = cli.task(self.db, self.id)
+        self.assertEqual((row['stage_idx'], row['status']), (4, 'WAITING_APPROVAL'))
+
     def test_project_root_is_independent(self):
         self.assertEqual(cli.project_path(str(self.project)),self.project.resolve())
         with self.assertRaises(ValueError):

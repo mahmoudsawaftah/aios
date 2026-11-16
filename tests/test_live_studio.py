@@ -58,7 +58,8 @@ class LiveStudioTests(unittest.TestCase):
             self.assertFalse((Path(td) / "studio-previews.json").exists())
 
     def test_studio_html_escapes_project_and_never_embeds_user_url(self):
-        x = live_studio.studio_html("csrf-token", TASK_ID, port=None)
+        with patch.object(live_studio, "idea_detail", return_value=mock_detail()):
+            x = live_studio.studio_html("csrf-token", TASK_ID, port=None)
         self.assertIn('data-live-task="' + TASK_ID + '"', x)
         self.assertNotIn("<iframe", x)
         self.assertIn('name="csrf" value="csrf-token"', x)

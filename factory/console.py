@@ -22,6 +22,9 @@ from factory import cli
 from factory.intake import create_idea, idea_detail, list_ideas
 from factory.ui_campus import (CAMPUS_CSS, campus_hero, approval_center, department_board,
                                task_hero, stage_track, approval_panel)
+from factory.live_studio import (STUDIO_CSS, STUDIO_JS, preview_port, save_preview_port,
+                                 studio_html, task_snapshot)
+import json
 
 HOST = "127.0.0.1"
 MAX_BODY = 8192
@@ -90,7 +93,7 @@ footer{padding:32px 4px 10px;color:#7285ac;font-size:11px;display:flex;justify-c
 @media(max-width:900px){.hero{grid-template-columns:1fr}.orbit{display:none}.grid{grid-template-columns:1fr}}
 @media(max-width:600px){.shell{padding:0 14px 28px}.topbar{min-height:76px}.brand-text strong{font-size:14px}.brand-text small{font-size:8px}.mark{width:42px;height:42px}.topright .pill:not(.online){display:none}.hero{padding:39px 0 26px}.stats{gap:8px}.stat{padding:13px}.stat .num{font-size:23px}.stat .desc{font-size:10px}.panel{padding:18px}.grid{gap:13px}footer{flex-direction:column}}
 """
-STYLE += CAMPUS_CSS
+STYLE += CAMPUS_CSS + STUDIO_CSS
 
 
 def page(title: str, content: str, csrf: str, *, auto_run: bool, message: str = "") -> bytes:
@@ -175,7 +178,9 @@ def home_html(csrf: str, records: list[dict]) -> str:
                 '<div class="task-meta"><span class="flag ' + status + '">'
                 + escape(r["status"]) + '</span><span>' + escape(r["stage"])
                 + '</span></div>'
-                '<p>' + escape(r["goal_preview"]) + '</p></article>'
+                '<p>' + escape(r["goal_preview"]) + '</p>'
+                '<a class="studio-open" href="/studio/' + escape(r["id"], quote=True)
+                + '">◈ افتح Live Studio ↗</a></article>'
             )
     return result + '</div></section></div>' + department_board(records)
 
@@ -187,6 +192,8 @@ def details_html(csrf: str, r: dict) -> str:
         + stage_track(r)
         + approval_panel(csrf, r)
         +         '<a class="back" href="/">↩ العودة إلى مركز التحكم</a>'
+        '<a class="back" style="margin-inline-start:20px" href="/studio/'
+        + escape(r["id"], quote=True) + '">◈ Live Studio · معاينة حية</a>'
         '<section class="panel detail-block">'
         '<div class="panel-head"><h2>◈ سجل المهمة ' + escape(r["id"])
         + '</h2><span class="flag ' + status + '">' + escape(r["status"]) + '</span></div>'
@@ -262,14 +269,23 @@ class ConsoleServer(ThreadingHTTPServer):
 class ConsoleHandler(BaseHTTPRequestHandler):
     server: ConsoleServer
 
-    def _send(self, code: int, contents: bytes, extra_headers=None):
+    def _send(self, code: int, contents: bytes, extra_headers=None, *,
+              content_type="text/html; charset=utf-8", studio=False, frame_port=None):
         self.send_response(code)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Type", content_type)
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Item-Space-AI", "local-console")
         self.send_header("X-Frame-Options", "DENY")
-        self.send_header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'")
+        csp = ("default-src 'none'; style-src 'unsafe-inline'; "
+               "form-action 'self'; base-uri 'none'; frame-ancestors 'none'")
+        if studio:
+            # Script and polling only on dedicated Studio page; preview port
+            # originates from validated per-task loopback-only config.
+            frame_src = (f"http://127.0.0.1:{frame_port}" if type(frame_port) is int
+                         else "'none'")
+            csp += "; script-src 'self'; connect-src 'self'; frame-src " + frame_src
+        self.send_header("Content-Security-Policy", csp)
         if extra_headers:
             for key, value in extra_headers.items():
                 self.send_header(key, value)
@@ -281,8 +297,9 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         authority = self.headers.get("Host", "")
         return authority in ("127.0.0.1:" + str(self.server.server_port),)
 
-    def _render(self, title, inner, *, code=200, message=""):
-        self._send(code, page(title, inner, self.server.csrf, auto_run=self.server.auto_run, message=message))
+    def _render(self, title, inner, *, code=200, message="", studio=False, frame_port=None):
+        self._send(code, page(title, inner, self.server.csrf, auto_run=self.server.auto_run,
+                              message=message), studio=studio, frame_port=frame_port)
 
     def do_GET(self):
         if not self._safe_host():
@@ -290,6 +307,22 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             return
         path = urlsplit(self.path).path
         try:
+            if path == "/studio.js":
+                self._send(200, STUDIO_JS.encode("utf-8"),
+                           content_type="application/javascript; charset=utf-8")
+                return
+            if path.startswith("/studio/") and path.count("/") == 3 and path.endswith("/state"):
+                task_id = path.split("/")[2]
+                snapshot = task_snapshot(task_id)
+                payload = json.dumps(snapshot, ensure_ascii=False).encode("utf-8")
+                self._send(200, payload, content_type="application/json; charset=utf-8")
+                return
+            if path.startswith("/studio/") and path.count("/") == 2:
+                task_id = path.split("/")[2]
+                port = preview_port(task_id)
+                self._render("Live Studio", studio_html(self.server.csrf, task_id, port=port),
+                             studio=True, frame_port=port)
+                return
             if path == "/":
                 self._render("AIOS Ideas", home_html(self.server.csrf, list_ideas()))
                 return
@@ -326,6 +359,12 @@ class ConsoleHandler(BaseHTTPRequestHandler):
                 self._render("Denied", "<p>Invalid form token.</p>", code=403)
                 return
             path = urlsplit(self.path).path
+            if path.startswith("/studio/") and path.count("/") == 3 and path.endswith("/preview"):
+                task_id = path.split("/")[2]
+                save_preview_port(task_id, fields.get("port", [""])[0],
+                                  console_port=self.server.server_port)
+                self._send(303, b"", {"Location": "/studio/" + task_id})
+                return
             if path == "/ideas":
                 r = create_idea(
                     fields.get("idea", [""])[0],

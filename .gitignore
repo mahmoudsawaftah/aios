@@ -28,3 +28,4 @@ __pycache__/
 Thumbs.db
 .factory-runtime/
 .aios-update-backups/
+.preview-runtime/

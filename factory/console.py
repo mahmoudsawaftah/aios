@@ -120,7 +120,7 @@ class ConsoleServer(ThreadingHTTPServer):
         # One worker. The v2 engine provides per-task file locking and approval gates.
         while not self.worker_stop.is_set():
             try:
-                with cli.connect() as db:
+                with cli.managed_connect() as db:
                     args = argparse.Namespace(limit=1, timeout=1800, max_attempts=2)
                     cli.run_pending(db, args)
             except Exception as exc:
@@ -213,7 +213,7 @@ class ConsoleHandler(BaseHTTPRequestHandler):
                 if gate not in ("build", "release"):
                     raise ValueError("Unknown approval gate.")
                 # Reuse the v2 approval gate validation with a short-lived DB transaction.
-                with cli.connect() as db:
+                with cli.managed_connect() as db:
                     cli.approve(db, argparse.Namespace(id=tid, gate=gate))
                 self._send(303, b"", {"Location": "/ideas/" + tid})
                 return

@@ -401,6 +401,10 @@ def main(argv=None):
         p.error("Port must be between 1024 and 65535")
     url = f"http://127.0.0.1:{args.port}/"
     if args.open_browser and console_already_running(args.port):
+        if args.auto_run:
+            print("Another Item Space AI console is already running. Stop it "
+                  "before enabling a new worker; no worker was started.", flush=True)
+            return 3
         webbrowser.open_new_tab(url)
         print("item space AI is already running. Opened existing dashboard.", flush=True)
         return 0

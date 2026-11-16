@@ -56,3 +56,23 @@ can prohibit embedding in iframes; use the "open in new tab" link in that case.
    change review, without exposing secrets.
 4. Screenshots, responsive device presets, and visual feedback.
 5. Agent/meeting visualizations grounded in persisted actual workflow events.
+
+## Launch safely while another task is running (Windows)
+
+Keep the active checkout `C:\Users\ENG_Mahmoud\Documents\aios` unchanged.
+
+Clone `feat/item-space-ai-live-studio` into a **different directory**, then
+double-click `LAUNCH_LIVE_STUDIO_READONLY.cmd`. The launcher:
+
+1. Runs the full Python test suite in the separate checkout and stops on failure.
+2. Opens `http://127.0.0.1:8877/`, using the original factory's SQLite
+   database in read-only mode so you can see **real, current tasks**.
+3. Keeps project creation, approval forms, research, marketing and worker
+   execution **disabled** in this preview.
+4. Allows only preview-port preference, stored in this separate checkout's
+   `.preview-runtime/studio-previews.json`.
+
+The preview browser is NOT a production deployment, does not start a dev server,
+and does not stop the active worker when closed. Do not clone on top of the
+running AIOS checkout. Do not copy source code into the active directory while
+the worker is using it.

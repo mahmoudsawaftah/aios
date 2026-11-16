@@ -7,6 +7,7 @@ Never expose this HTTP server directly to the public Internet.
 from __future__ import annotations
 
 import argparse
+import webbrowser
 from html import escape
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import os
@@ -15,6 +16,8 @@ import secrets
 import threading
 import time
 from urllib.parse import parse_qs, urlsplit
+from urllib.request import urlopen
+from urllib.error import URLError
 from factory import cli
 from factory.intake import create_idea, idea_detail, list_ideas
 
@@ -266,6 +269,7 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Item-Space-AI", "local-console")
         self.send_header("X-Frame-Options", "DENY")
         self.send_header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'")
         if extra_headers:
@@ -351,21 +355,44 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         pass
 
 
+def console_already_running(port: int) -> bool:
+    """Only reuse the port if it is serving this trusted localhost console."""
+    try:
+        with urlopen(f"http://127.0.0.1:{port}/", timeout=0.7) as response:
+            return response.headers.get("X-Item-Space-AI") == "local-console"
+    except (URLError, TimeoutError, OSError):
+        return False
+
+
 def main(argv=None):
-    p = argparse.ArgumentParser(description="AIOS v3 local idea console")
+    p = argparse.ArgumentParser(description="item space AI / local idea console")
     p.add_argument("--port", type=int, default=8765)
+    p.add_argument("--open-browser", action="store_true",
+                   help="Launch the local dashboard automatically after the server is ready.")
     p.add_argument("--auto-run", action="store_true",
                    help="Explicitly start one Codex worker; may consume plan usage.")
     args = p.parse_args(argv)
     if not 1024 <= args.port <= 65535:
         p.error("Port must be between 1024 and 65535")
-    with ConsoleServer((HOST, args.port), auto_run=args.auto_run) as server:
-        print("AIOS idea console: http://127.0.0.1:" + str(args.port), flush=True)
-        print("Local only. " + ("Auto-run ON" if args.auto_run else "Auto-run OFF"), flush=True)
-        try:
-            server.serve_forever(poll_interval=0.4)
-        except KeyboardInterrupt:
-            pass
+    url = f"http://127.0.0.1:{args.port}/"
+    if args.open_browser and console_already_running(args.port):
+        webbrowser.open_new_tab(url)
+        print("item space AI is already running. Opened existing dashboard.", flush=True)
+        return 0
+    try:
+        with ConsoleServer((HOST, args.port), auto_run=args.auto_run) as server:
+            print("item space AI: " + url, flush=True)
+            print("Local only. " + ("Auto-run ON" if args.auto_run else "Auto-run OFF"), flush=True)
+            if args.open_browser:
+                threading.Thread(target=webbrowser.open_new_tab, args=(url,), daemon=True).start()
+            try:
+                server.serve_forever(poll_interval=0.4)
+            except KeyboardInterrupt:
+                pass
+    except OSError as exc:
+        print("item space AI could not bind local port "
+              + str(args.port) + ": " + str(exc), flush=True)
+        return 2
     return 0
 
 

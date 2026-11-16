@@ -9,7 +9,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from factory import cli, github_ops, marketing, mcp_bridge, oss_research, supervisor
+from factory import actions, cli, github_ops, intake, marketing, mcp_bridge, oss_research, supervisor
 
 
 class AutonomyTests(unittest.TestCase):
@@ -90,6 +90,26 @@ class AutonomyTests(unittest.TestCase):
             self.assertEqual(output["posts"], 14)
             self.assertTrue(Path(output["calendar_file"]).exists())
             self.assertTrue(Path(output["brief_file"]).exists())
+
+    def test_dashboard_marketing_action_is_saved_and_displayed(self):
+        with tempfile.TemporaryDirectory() as td, ExitStack() as stack:
+            root = Path(td)
+            stack.enter_context(patch.object(cli, "STATE", root / "runtime"))
+            stack.enter_context(patch.object(cli, "DB", root / "runtime" / "state.sqlite3"))
+            task_id = "112233aabbcc"
+            with cli.managed_connect() as db:
+                ts = cli.utcnow()
+                db.execute(
+                    "INSERT INTO tasks(id,project,goal,methodology,status,created_at,updated_at) "
+                    "VALUES (?,?,?,?,?,?,?)",
+                    (task_id, str(root / "salon"), "Booking product",
+                     "hybrid", "PENDING", ts, ts))
+            action = actions.perform(task_id, "marketing")
+            self.assertTrue(Path(action["report"]).is_file())
+            details = intake.idea_detail(task_id)
+            self.assertTrue(any(out["stage"] == "marketing" for out in details["outputs"]))
+            with self.assertRaises(ValueError):
+                actions.perform(task_id, "publish_to_instagram")
 
     def test_github_publishing_is_disabled_by_default(self):
         with patch.dict("os.environ", {"AIOS_ALLOW_GITHUB_PR": "0"}):

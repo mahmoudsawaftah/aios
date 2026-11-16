@@ -208,8 +208,8 @@ def codex_stage(row, stage, *, timeout):
     workdir = Path(row['project']) if STAGES.index(stage) < STAGES.index('implementation') else ensure_worktree(row)
     prompt = stage_prompt(row,stage,workdir)
     # No shell=True and no automatic escalation; never pass API keys on the CLI.
-    cmd = ['codex','exec','--cd',str(workdir),'--sandbox',sandbox,
-           '--ask-for-approval','never','-']
+    cmd = ['codex','--ask-for-approval','never','exec','--cd',str(workdir),
+           '--sandbox',sandbox,'-']
     completed = subprocess.run(cmd,input=prompt, capture_output=True,
                                text=True,encoding='utf-8',errors='replace',
                                timeout=timeout, cwd=str(workdir),check=False)

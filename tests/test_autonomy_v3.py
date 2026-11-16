@@ -4,7 +4,10 @@ from __future__ import annotations
 from contextlib import ExitStack
 from datetime import datetime, timezone
 import json
+import os
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -33,6 +36,46 @@ class AutonomyTests(unittest.TestCase):
                                               "arguments": {"idea": "salon CRM"}}})
             create.assert_called_once_with("salon CRM", "", "hybrid")
             self.assertIn("PENDING", x["result"]["content"][0]["text"])
+
+    def test_mcp_stdio_utf8_pipe_handles_arabic_on_windows_codepage(self):
+        """No DB writes: exercise real MCP subprocess with non-UTF8 text stdout.
+
+        Historically the first ASCII-only create succeeded, then list_tasks
+        containing an Arabic goal crashed the process with 'Transport closed'.
+        """
+        script = (
+            "from factory import mcp_bridge\n"
+            "mcp_bridge.list_ideas = lambda limit: ["
+            "{'id':'528e9ed89e19','title':'is-mcp-test',"
+            "'status':'PENDING','stage':'discovery',"
+            "'updated_at':'2026-11-16',"
+            "'goal_preview':'مشروع تجريبي — الحجز والإدارة',"
+            "'error':''}]\n"
+            "raise SystemExit(mcp_bridge.serve())\n"
+        )
+        messages = [
+            {"jsonrpc":"2.0","id":1,"method":"initialize","params":{}},
+            {"jsonrpc":"2.0","method":"notifications/initialized"},
+            {"jsonrpc":"2.0","id":2,"method":"tools/call",
+             "params":{"name":"list_tasks","arguments":{}}},
+            {"jsonrpc":"2.0","id":3,"method":"ping"},
+            {"jsonrpc":"2.0","id":4,"method":"tools/call",
+             "params":{"name":"list_tasks","arguments":{}}},
+        ]
+        payload = "".join(json.dumps(msg) + "\n" for msg in messages).encode("utf-8")
+        env = dict(os.environ)
+        env["PYTHONIOENCODING"] = "cp1252"
+        process = subprocess.run(
+            [sys.executable, "-c", script],
+            input=payload, capture_output=True, cwd=str(cli.ROOT),
+            env=env, timeout=20, check=False,
+        )
+        self.assertEqual(process.returncode, 0,
+                         process.stderr.decode("utf-8", errors="replace")[-1200:])
+        responses = [json.loads(line) for line in process.stdout.decode("utf-8").splitlines()]
+        self.assertEqual([item["id"] for item in responses], [1, 2, 3, 4])
+        self.assertIn("مشروع تجريبي", responses[1]["result"]["content"][0]["text"])
+        self.assertIn("مشروع تجريبي", responses[3]["result"]["content"][0]["text"])
 
     def test_mcp_cannot_bypass_gates_or_call_unknown_tool(self):
         x = mcp_bridge.handle({"jsonrpc": "2.0", "id": 5, "method": "tools/call",

@@ -28,8 +28,22 @@ def run(args: list[str], *, cwd: Path | None = None, timeout: int = 90) -> str:
 
 
 def suspicious(path: str) -> bool:
-    path = path.replace("\\", "/").lower().lstrip("./")
-    pieces = path.split("/")
+    """Flag sensitive paths without stripping leading dots from dotfiles.
+
+    str.lstrip("./") is unsafe: it removes ALL leading "." and "/" chars,
+    converting ".env" to "env" and ".git" to "git".
+    """
+    if not isinstance(path, str) or not path:
+        return True
+    normalized = path.replace("\\", "/").lower()
+    while normalized.startswith("./"):
+        normalized = normalized[2:]
+    pieces = normalized.split("/")
+    if any(p in ("vault", ".factory-runtime", ".aios-update-backups",
+                 "recovery", "backups", ".git") for p in pieces):
+        return True
+    if any(p in ("", ".", "..") for p in pieces):
+        return True
     leaf = pieces[-1]
     if leaf == ".env.example":
         return False
@@ -37,9 +51,6 @@ def suspicious(path: str) -> bool:
         "id_rsa", "id_ed25519", "credentials.json", "secrets.json",
         "service-account.json", "config.local.json", "state.sqlite3",
     ):
-        return True
-    if any(p in ("vault", ".factory-runtime", ".aios-update-backups",
-                 "recovery", "backups", ".git") for p in pieces):
         return True
     return leaf.endswith((".pem", ".p12", ".pfx", ".key", ".sqlite", ".sqlite3",
                           ".db", ".bak", ".kdbx"))

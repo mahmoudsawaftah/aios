@@ -1,0 +1,31 @@
+name: AIOS Software Factory Tests
+on:
+  push:
+    paths:
+      - 'factory/**'
+      - 'tests/**'
+      - 'scripts/**'
+      - '**/*.md'
+      - '.env.example'
+      - '.github/workflows/aios-factory-tests.yml'
+  pull_request:
+    paths:
+      - 'factory/**'
+      - 'tests/**'
+      - 'scripts/**'
+      - '**/*.md'
+      - '.env.example'
+      - '.github/workflows/aios-factory-tests.yml'
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - run: python scripts/audit_legacy_projects.py .
+      - run: git diff --check

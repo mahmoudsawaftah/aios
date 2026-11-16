@@ -1,75 +1,52 @@
-# aios - AI Operating System for Moe
+# AIOS Software Factory v2
 
-Welcome to `aios`, the centralized standards, operating procedures, and tooling repository for Moe's development projects across **Antigravity**, **Codex**, and **Claude Code**.
+AIOS is a supervised software delivery control repository for multiple independent
+products. It provides reusable role prompts, hybrid Agile/traditional SDLC guidance,
+a durable single-host orchestrator and owner approval gates.
 
----
+Product code lives in independent Git repositories **outside AIOS**. No previous
+client, technology stack, design system, hosting service or credentials are defaults.
 
-## 1. What `aios` Is
+## Repository map
 
-`aios` versions the **standards layer only**. It does not hold project code or client files.
-- **Projects** live in `projects/<name>/` as independent Git repositories.
-- **Personal Knowledge & AI Memory** live in your Obsidian vault (`moevault`), connected via junction at `aios/vault/`.
-- **Operating Guidelines & SOPs** live in `docs/` and `directives/`.
-- **Reusable Automation Scripts** live in `execution/`.
+- `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`: shared agent contract and harness pointers.
+- `factory/`: Python standard-library CLI and SQLite state machine.
+- `agents/roles/`: discovery, requirements, architecture, backlog, implementation,
+  QA, security and release planning roles.
+- `governance/`: security boundaries and owner approval policy.
+- `docs/`, `directives/`, `execution/`: engineering knowledge, SOPs and tools.
+- `projects/INDEX.md`: owner-selected project registry; no active registrations.
+- `projects/_template/`: optional generic template to copy into an external repo.
+- `tests/`, `scripts/`: regression checks and classified legacy-reference audit.
+- `output/`, `raw/`: control reports and temporary work.
+- `.factory-runtime/`: ignored local state, events and stage outputs; preserve and
+  back it up separately.
+- `vault/`: optional external knowledge junction; excluded from repository scans.
+- `.aios-update-backups/`: ignored recovery data; never clean it automatically.
 
----
+## Verify locally
 
-## 2. Directory Layout
+From the AIOS control root, without model calls or external services:
 
-```
-aios/
-  AGENTS.md              <- Canonical instructions for all AI agents
-  CLAUDE.md              <- Pointer to AGENTS.md for Claude Code
-  GEMINI.md              <- Pointer to AGENTS.md for Antigravity
-  .env.example           <- Consolidated environment variable template (names only)
-  .gitignore             <- Protects vault/, projects/*, and secrets
-
-  vault/                 <- NTFS Junction to moevault (Obsidian vault). Gitignored.
-
-  docs/                  <- Core documentation:
-    doe.md               <- Document -> Orchestrate -> Execute methodology
-    operating-rules.md   <- Twenty foundational operating guidelines
-    memory-protocol.md   <- Shared memory structure and rules
-    conventions.md       <- Repository model and naming conventions
-    project-structure.md <- Standard shape for all projects
-    toolchain.md         <- Installed tools & curated ECC skills
-    harvest.md           <- Provenance of standards harvested from real projects
-    onboarding.md        <- Plain-language guide for Moe
-
-  directives/            <- Shared SOPs across projects
-  execution/             <- Reusable automation scripts:
-    recon/               <- Read-only discovery
-    check/               <- Health checks (Check-AiosHealth.ps1)
-    maint/               <- State-modifying maintenance
-    util/                <- Synchronization & utility tools (Sync-Aios.ps1)
-
-  projects/              <- Your projects (each is its own Git repository):
-    INDEX.md             <- Central registry of all projects and remotes
-    _template/           <- Standard copyable template for new projects
-    AMG/                 <- WorkMerit platform repo
-    HR odoo/             <- HRA platform repo
-
-  output/                <- Client deliverables & final exports
-  raw/                   <- Working scratch area (inbox, query dumps, analysis)
-  comms/                 <- Email & message drafts (gitignored)
-  mytasks/               <- Session task logs (YYYY-MM-DD-*.md)
-  reminders/             <- Actionable dated reminders (YYYY-MM-DD-*.md)
+```powershell
+python -m unittest discover -s tests -p 'test_*.py' -v
+python scripts/audit_legacy_projects.py .
+git diff --check
 ```
 
----
+See [the quick start](README_FACTORY.md) for explicit project paths, task creation,
+run/resume commands and owner approvals. Creating and running a task can write
+runtime state and an external task worktree; only do so for an authorized product.
 
-## 3. Quick Start Commands
+The build gate follows discovery, requirements, architecture and backlog. QA,
+security and release planning follow implementation. The release gate records
+signoff and never deploys. See [architecture](docs/AIOS_SOFTWARE_FACTORY.md),
+[hybrid delivery](docs/HYBRID_DELIVERY_METHODOLOGY.md) and
+[security policy](governance/SECURITY_AND_APPROVALS.md).
 
-- **Run System Health Check**:
-  ```powershell
-  powershell -File execution/check/Check-AiosHealth.ps1
-  ```
-- **Sync & Push Standards Layer**:
-  ```powershell
-  powershell -File execution/util/Sync-Aios.ps1 -Message "docs: update guidelines"
-  ```
-- **Start a New Project**:
-  ```powershell
-  Copy-Item -Recurse "projects/_template" "projects/my-new-project"
-  ```
-  Then see `projects/_template/README.md` for initialization steps.
+The current MVP executes roles sequentially through one Codex CLI worker. Multiple
+independent products are supported; concurrent isolated agents and a distributed
+scheduler are future work. Never automatically commit, push, merge or publish.
+
+Migration procedure: [control repository migration](directives/control-repository-migration.md).
+Verification evidence: [migration report](output/factory-v2-migration-report.md).

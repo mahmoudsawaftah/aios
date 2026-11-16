@@ -1,6 +1,6 @@
 # Directive: Next.js & React 19 Verification SOP
 
-- **Applicability**: Projects utilizing Next.js (e.g. `AMG`, `HR odoo`)
+- **Applicability**: Only independently registered projects whose manifests use Next.js. This is an optional stack-specific SOP, not a factory dependency.
 - **Goal**: Deterministically verify linting, typechecking, tests, and build boundaries before deploying or creating handover PRs.
 
 ---

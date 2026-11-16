@@ -14,8 +14,8 @@ Twenty foundational rules that keep Moe's environment clean, safe, and reliable.
 - **Rule**: When a fact changes, update the memory file, the `MEMORY.md` index line, the directive, the script comments, and the vault note.
 - **Why**: Updating only one surface leaves stale contradictory claims on other surfaces, causing agents to produce conflicting results.
 
-### 3. Delete a file whose premise is now false
-- **Rule**: If a note or design document is completely superseded, remove or archive it, and repoint any links to it.
+### 3. Mark superseded premises explicitly
+- **Rule**: Mark superseded notes explicitly and repoint active links. Request approval before deleting or moving user data.
 - **Why**: Leaving discredited notes in place allows future agents to cite them as valid evidence.
 
 ### 4. Search for contradictions before you finish
@@ -31,7 +31,7 @@ Twenty foundational rules that keep Moe's environment clean, safe, and reliable.
 ## Where Things Go
 
 ### 6. Place files in their designated home
-- **Rule**: Finished deliverables for other people $\rightarrow$ `output/`. Working notes and scratch $\rightarrow$ `raw/`. Email drafts and proposals $\rightarrow$ `comms/`. Durable understanding $\rightarrow$ `moevault/`. Code $\rightarrow$ `projects/<name>/`.
+- **Rule**: Control reports belong in `output/`, scratch in `raw/`, and product code and client deliverables in their independent external product workspace. External vault and communications data require explicit authorization.
 - **Why**: Clear boundaries prevent code repositories from being polluted with temporary scratch files or confidential client messages.
 
 ### 7. Never leave loose files in root directories
@@ -91,9 +91,9 @@ Twenty foundational rules that keep Moe's environment clean, safe, and reliable.
 - **Why**: Past work and lessons learned are valuable references for future freelance gigs.
 
 ### 19. Every project has a remote
-- **Rule**: Every project in `projects/` must be backed up to a remote repository on GitHub.
+- **Rule**: Each external project needs an owner-approved remote and recovery plan. A Git remote does not protect uncommitted files, runtime state, credentials or databases. Do not publish automatically.
 - **Why**: Work that exists only on local disk is one hardware failure or corrupted sector away from being lost forever.
 
-### 20. Push `aios` at the end of every modifying session
-- **Rule**: If a session altered `aios/` (directives, scripts, docs, registry), run `Sync-Aios.ps1` to commit and push to GitHub.
-- **Why**: Your standards layer is your safety net; keep it synchronized in the cloud.
+### 20. Review changes before publication
+- **Rule**: End modifying sessions with verified diffs and evidence. Commit, push and publication require explicit owner authorization; never run the legacy sync helper automatically.
+- **Why**: Review preserves repository boundaries and approval gates.

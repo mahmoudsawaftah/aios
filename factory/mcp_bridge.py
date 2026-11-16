@@ -150,8 +150,17 @@ def handle(message: dict) -> dict | None:
                 "error": {"code": -32602, "message": safe_type}}
 
 
-def serve() -> int:
-    for raw in sys.stdin.buffer:
+def serve(stdin=None, stdout=None) -> int:
+    """Serve UTF-8 JSON-RPC over binary stdio streams.
+
+    Windows Python uses a locale code page for redirected text stdout, which
+    can fail on Arabic and non-ASCII text with UnicodeEncodeError. MCP requires
+    UTF-8, so never write protocol payloads through sys.stdout's text encoder.
+    The optional binary streams support deterministic in-memory protocol tests.
+    """
+    input_stream = sys.stdin.buffer if stdin is None else stdin
+    output_stream = sys.stdout.buffer if stdout is None else stdout
+    for raw in input_stream:
         if len(raw) > MAX_MESSAGE:
             continue
         try:
@@ -161,10 +170,11 @@ def serve() -> int:
             reply = {"jsonrpc": "2.0", "id": None,
                      "error": {"code": -32700, "message": "Parse error"}}
         if reply is not None:
-            sys.stdout.write(json.dumps(reply, ensure_ascii=False, separators=(",", ":")) + "\n")
-            sys.stdout.flush()
+            payload = (json.dumps(reply, ensure_ascii=False, separators=(",", ":"))
+                       + "\n").encode("utf-8")
+            output_stream.write(payload)
+            output_stream.flush()
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(serve())

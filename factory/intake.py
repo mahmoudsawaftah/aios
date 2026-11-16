@@ -159,6 +159,8 @@ def idea_detail(task_id: str) -> dict:
             if p.exists() and p.is_file():
                 outputs.append({"stage": stage, "content": p.read_text(
                     encoding="utf-8", errors="replace")[-15000:]})
+        from factory.actions import extra_outputs
+        outputs.extend(extra_outputs(task_id))
         return {
             "id": task_id, "project": r["project"], "goal": r["goal"],
             "status": r["status"], "next_stage": next_stage,

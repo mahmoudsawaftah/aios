@@ -118,9 +118,20 @@ def publish_private_pr(task_id: str) -> dict:
     if not repository_name:
         raise ValueError("Invalid repository name.")
     full_name = account + "/" + repository_name
-    if not info["has_origin"]:
+    if info["has_origin"]:
+        existing = run(["git", "-C", str(project), "remote", "get-url", "origin"])
+        # Refuse unknown hosts or mismatched repositories.
+        expected_https = "https://github.com/" + full_name + ".git"
+        expected_ssh = "git@github.com:" + full_name + ".git"
+        if existing.rstrip("/") not in (expected_https, expected_https[:-4],
+                                          expected_ssh, expected_ssh[:-4]):
+            raise ValueError("Existing origin does not match the authenticated GitHub owner/repo.")
+    else:
         run(["gh", "repo", "create", full_name, "--private", "--source",
              str(project), "--remote", "origin", "--push"], timeout=120)
+    if run(["gh", "repo", "view", full_name, "--json", "isPrivate",
+            "--jq", ".isPrivate"], timeout=30).strip().lower() != "true":
+        raise ValueError("Refusing to publish to a non-private repository.")
     # Pre-commit check is not a substitute for scanning contents.
     run(["git", "-C", str(worktree), "diff", "--check"])
     if any(suspicious(n) for n in names_to_check(worktree)):

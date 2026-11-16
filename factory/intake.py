@@ -92,6 +92,8 @@ def create_idea(idea: str, title: str = "", methodology: str = "hybrid") -> dict
             "If the owner asks Codex in an IDE to plan or build a feature, use the\n"
             "item-space-ai MCP tool submit_existing_project with this repository's\n"
             "absolute Git root and the owner's exact goal (submit only once).\n"
+            "When the prompt starts with AIOS Software Factory — stage, this is\n"
+            "an active worker stage: NEVER re-queue it; execute its stage contract.\n"
             "Then report the task ID and monitor via get_task; do not claim it has\n"
             "finished merely because it was queued. A separate worker executes tasks.\n"
             "Do not merge, deploy, publish, create accounts, bypass approvals, spend\n"

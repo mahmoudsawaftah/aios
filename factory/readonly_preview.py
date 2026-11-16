@@ -18,6 +18,14 @@ LIVE_TASK = re.compile(r"^/studio/[0-9a-f]{12}/preview$")
 
 
 class ReadOnlyHandler(console.ConsoleHandler):
+    def _render(self, title, inner, *, code=200, message="", studio=False, frame_port=None):
+        # Never imply that a preview's approval buttons can modify live state.
+        notice = ("وضع معاينة فقط — المشاريع والموافقات والتنفيذ معطلة هنا. "
+                  "افتح واجهة Item Space AI الأصلية للقرارات الحقيقية.")
+        return super()._render(title, inner, code=code,
+                               message=notice if not message else notice + " " + message,
+                               studio=studio, frame_port=frame_port)
+
     def do_POST(self):
         from urllib.parse import urlsplit
         path = urlsplit(self.path).path

@@ -27,39 +27,68 @@ INSTRUCTIONS = (
 )
 
 
-def _tool(name: str, description: str, properties: dict, required=()) -> dict:
-    return {
+def _tool(name: str, description: str, properties: dict, required=(), *, annotations=None) -> dict:
+    tool = {
         "name": name, "description": description,
         "inputSchema": {"type": "object", "properties": properties,
                         "required": list(required), "additionalProperties": False},
     }
+    if annotations is not None:
+        # MCP annotations inform clients; call() and read-only SQLite connections
+        # remain the actual enforcement boundary.
+        tool["annotations"] = dict(annotations)
+    return tool
+
+
+READ_ONLY_ANNOTATIONS = {
+    "readOnlyHint": True, "destructiveHint": False,
+    "idempotentHint": True, "openWorldHint": False,
+}
+LOCAL_WRITE_ANNOTATIONS = {
+    "readOnlyHint": False, "destructiveHint": False,
+    "idempotentHint": False, "openWorldHint": False,
+}
+NETWORK_READ_ANNOTATIONS = {
+    "readOnlyHint": True, "destructiveHint": False,
+    "idempotentHint": True, "openWorldHint": True,
+}
+NETWORK_WRITE_ANNOTATIONS = {
+    "readOnlyHint": False, "destructiveHint": False,
+    "idempotentHint": False, "openWorldHint": True,
+}
 
 
 TOOLS = [
     _tool("submit_idea", "Create an independent LOCAL Git project and durable queue entry; does not start Codex.",
           {"idea": {"type": "string", "minLength": 1, "maxLength": 4000},
            "title": {"type": "string", "maxLength": 100},
-           "methodology": {"type": "string", "enum": ["hybrid", "agile", "traditional"]}}, ("idea",)),
+           "methodology": {"type": "string", "enum": ["hybrid", "agile", "traditional"]}}, ("idea",),
+          annotations=LOCAL_WRITE_ANNOTATIONS),
     _tool("submit_existing_project",
           "Queue a goal for an EXISTING independent local Git repository. Use when Codex is already editing a project in the IDE.",
           {"project_path": {"type": "string", "minLength": 1},
            "goal": {"type": "string", "minLength": 1, "maxLength": 4000},
            "methodology": {"type": "string", "enum": ["hybrid", "agile", "traditional"]}},
-          ("project_path", "goal")),
+          ("project_path", "goal"), annotations=LOCAL_WRITE_ANNOTATIONS),
     _tool("list_tasks", "Show local Item Space AI queue and states; does not start workers.",
-          {"limit": {"type": "integer", "minimum": 1, "maximum": 30}}),
+          {"limit": {"type": "integer", "minimum": 1, "maximum": 30}},
+          annotations=READ_ONLY_ANNOTATIONS),
     _tool("get_task", "Inspect a task, stage outputs and approval requirements (read-only).",
-          {"task_id": {"type": "string", "pattern": "^[0-9a-f]{12}$"}}, ("task_id",)),
+          {"task_id": {"type": "string", "pattern": "^[0-9a-f]{12}$"}}, ("task_id",),
+          annotations=READ_ONLY_ANNOTATIONS),
     _tool("search_open_source",
           "Search public GitHub projects, flag license concerns and save an evidence-backed report; never clone or run repositories.",
           {"query": {"type": "string", "minLength": 2, "maxLength": 150},
-           "limit": {"type": "integer", "minimum": 1, "maximum": 10}}, ("query",)),
+           "limit": {"type": "integer", "minimum": 1, "maximum": 10}}, ("query",),
+          annotations=NETWORK_WRITE_ANNOTATIONS),
     _tool("generate_marketing_plan",
           "Generate an OFFLINE draft content calendar and launch checklist; does not publish, send DMs or create fake engagement.",
-          {"task_id": {"type": "string", "pattern": "^[0-9a-f]{12}$"}}, ("task_id",)),
+          {"task_id": {"type": "string", "pattern": "^[0-9a-f]{12}$"}}, ("task_id",),
+          annotations=LOCAL_WRITE_ANNOTATIONS),
     _tool("github_preflight",
           "Read-only GitHub publishing readiness check: credentials, repository, risky files. No push or creation.",
-          {"task_id": {"type": "string", "pattern": "^[0-9a-f]{12}$"}}, ("task_id",)),
+          {"task_id": {"type": "string", "pattern": "^[0-9a-f]{12}$"}}, ("task_id",),
+          annotations=NETWORK_READ_ANNOTATIONS),
 ]
 
 
@@ -90,10 +119,12 @@ def call(name: str, args: dict) -> dict:
     if name == "submit_existing_project":
         return _submit_existing(args)
     if name == "list_tasks":
-        return {"tasks": list_ideas(int(args.get("limit", 20)))}
+        return {"state_store_id": cli.state_store_id(),
+                "tasks": list_ideas(int(args.get("limit", 20)))}
     if name == "get_task":
         d = idea_detail(args["task_id"])
         d["outputs"] = [{**o, "content": o["content"][-6000:]} for o in d["outputs"]]
+        d["state_store_id"] = cli.state_store_id()
         return d
     if name == "search_open_source":
         from factory.oss_research import search_open_source

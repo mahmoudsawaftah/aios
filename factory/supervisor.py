@@ -21,7 +21,8 @@ def heartbeat(*, state: str, note: str) -> None:
     tmp = cli.STATE / ("worker-status-" + str(os.getpid()) + ".tmp")
     tmp.write_text(json.dumps({
         "pid": os.getpid(), "last_seen": cli.utcnow(),
-        "state": state, "note": note[:180]
+        "state": state, "note": note[:180],
+        "state_store_id": cli.state_store_id(),
     }), encoding="utf-8")
     os.replace(tmp, marker)
 

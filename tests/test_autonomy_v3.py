@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -26,7 +27,71 @@ class AutonomyTests(unittest.TestCase):
         self.assertTrue({"submit_idea", "submit_existing_project", "get_task",
                          "search_open_source", "generate_marketing_plan",
                          "github_preflight"}.issubset(names))
+        tools = {tool["name"]: tool for tool in z["result"]["tools"]}
+        self.assertTrue(tools["list_tasks"]["annotations"]["readOnlyHint"])
+        self.assertTrue(tools["get_task"]["annotations"]["readOnlyHint"])
+        self.assertFalse(tools["submit_idea"]["annotations"]["readOnlyHint"])
         self.assertIsNone(mcp_bridge.handle({"jsonrpc": "2.0", "method": "notifications/initialized"}))
+
+    def test_mcp_read_dispatch_is_readonly_and_state_id_matches_worker(self):
+        with tempfile.TemporaryDirectory() as td, ExitStack() as stack:
+            root = Path(td)
+            db_path = root / "runtime" / "state.sqlite3"
+            stack.enter_context(patch.object(cli, "STATE", root / "runtime"))
+            stack.enter_context(patch.object(cli, "DB", db_path))
+            task_id = "fedcba987654"
+            with cli.managed_connect() as db:
+                ts = cli.utcnow()
+                db.execute(
+                    "INSERT INTO tasks(id,project,goal,methodology,status,created_at,updated_at) "
+                    "VALUES (?,?,?,?,?,?,?)",
+                    (task_id, str(root / "product"), "Test read path", "hybrid", "PENDING", ts, ts),
+                )
+            before_bytes = db_path.read_bytes()
+            with cli.managed_readonly_connect() as db:
+                before_schema = db.execute(
+                    "SELECT name,sql FROM sqlite_master ORDER BY name"
+                ).fetchall()
+                before_journal_mode = db.execute("PRAGMA journal_mode").fetchone()[0]
+
+            list_reply = mcp_bridge.handle({
+                "jsonrpc": "2.0", "id": 7, "method": "tools/call",
+                "params": {"name": "list_tasks", "arguments": {"limit": 10}},
+            })
+            detail_reply = mcp_bridge.handle({
+                "jsonrpc": "2.0", "id": 8, "method": "tools/call",
+                "params": {"name": "get_task", "arguments": {"task_id": task_id}},
+            })
+            listed = json.loads(list_reply["result"]["content"][0]["text"])
+            detail = json.loads(detail_reply["result"]["content"][0]["text"])
+            self.assertEqual(listed["state_store_id"], detail["state_store_id"])
+            self.assertEqual(listed["state_store_id"], cli.state_store_id())
+            self.assertEqual([task["id"] for task in listed["tasks"]], [task_id])
+            self.assertEqual(detail["id"], task_id)
+            self.assertNotIn(str(db_path), list_reply["result"]["content"][0]["text"])
+
+            with cli.managed_readonly_connect() as db:
+                with self.assertRaises(sqlite3.OperationalError):
+                    db.execute("CREATE TABLE forbidden_write (id INTEGER)")
+                self.assertEqual(db.execute("PRAGMA journal_mode").fetchone()[0],
+                                 before_journal_mode)
+                self.assertEqual(db.execute(
+                    "SELECT name,sql FROM sqlite_master ORDER BY name"
+                ).fetchall(), before_schema)
+            self.assertEqual(db_path.read_bytes(), before_bytes)
+
+            supervisor.heartbeat(state="IDLE", note="test diagnostic")
+            heartbeat = json.loads((root / "runtime" / "worker-status.json").read_text(encoding="utf-8"))
+            self.assertEqual(heartbeat["state_store_id"], listed["state_store_id"])
+
+    def test_readonly_connection_does_not_create_missing_state(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td) / "not-created"
+            with patch.object(cli, "STATE", root), patch.object(cli, "DB", root / "state.sqlite3"):
+                with self.assertRaises(FileNotFoundError):
+                    with cli.managed_readonly_connect():
+                        pass
+            self.assertFalse(root.exists())
 
     def test_mcp_tool_dispatch_does_not_execute_a_worker(self):
         with patch.object(mcp_bridge, "create_idea",

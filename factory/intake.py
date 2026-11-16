@@ -125,7 +125,7 @@ def create_idea(idea: str, title: str = "", methodology: str = "hybrid") -> dict
 
 
 def list_ideas(limit: int = 50) -> list[dict]:
-    with cli.managed_connect() as db:
+    with cli.managed_readonly_connect() as db:
         rows = db.execute(
             "SELECT id,project,goal,methodology,status,stage_idx,attempt,error,updated_at "
             "FROM tasks ORDER BY created_at DESC LIMIT ?", (min(max(limit, 1), 100),),
@@ -142,7 +142,7 @@ def list_ideas(limit: int = 50) -> list[dict]:
 def idea_detail(task_id: str) -> dict:
     if not re.fullmatch(r"[0-9a-f]{12}", task_id):
         raise ValueError("Invalid task identifier.")
-    with cli.managed_connect() as db:
+    with cli.managed_readonly_connect() as db:
         r = cli.task(db, task_id)
         idx = r["stage_idx"]
         next_stage = cli.STAGES[idx] if idx < len(cli.STAGES) else "release_gate"

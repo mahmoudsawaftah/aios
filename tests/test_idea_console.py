@@ -70,7 +70,7 @@ class IdeaConsoleTests(unittest.TestCase):
 
     def test_local_binding_and_safe_defaults(self):
         self.assertEqual(console.HOST, "127.0.0.1")
-        self.assertFalse(console.main.__defaults__)
+        self.assertEqual(console.main.__defaults__, (None,))
         self.assertIn("no GitHub push", console.page("test", "ok", "csrf", auto_run=False).decode())
 
 

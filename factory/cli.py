@@ -6,7 +6,7 @@ It does not push, deploy, delete user projects, or manage credentials.
 from __future__ import annotations
 
 import argparse
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from datetime import datetime, timezone
 import json
 import os
@@ -54,6 +54,14 @@ def connect():
     );
     ''')
     return db
+
+
+@contextmanager
+def managed_connect():
+    """Commit/rollback and always close SQLite connections, including on Windows."""
+    with closing(connect()) as db:
+        with db:
+            yield db
 
 
 def event(db, task_id, label, info=''):
@@ -208,8 +216,8 @@ def codex_stage(row, stage, *, timeout):
     workdir = Path(row['project']) if STAGES.index(stage) < STAGES.index('implementation') else ensure_worktree(row)
     prompt = stage_prompt(row,stage,workdir)
     # No shell=True and no automatic escalation; never pass API keys on the CLI.
-    cmd = ['codex','exec','--cd',str(workdir),'--sandbox',sandbox,
-           '--ask-for-approval','never','-']
+    cmd = ['codex','--ask-for-approval','never','exec','--cd',str(workdir),
+           '--sandbox',sandbox,'-']
     completed = subprocess.run(cmd,input=prompt, capture_output=True,
                                text=True,encoding='utf-8',errors='replace',
                                timeout=timeout, cwd=str(workdir),check=False)
@@ -358,7 +366,7 @@ def main(argv=None):
     parser=build_parser()
     args=parser.parse_args(argv)
     try:
-        with connect() as db:
+        with managed_connect() as db:
             if args.command == 'create': create(db,args)
             elif args.command == 'run': run_pipeline(db,args)
             elif args.command == 'approve': approve(db,args)

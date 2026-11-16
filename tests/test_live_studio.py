@@ -3,6 +3,10 @@ from __future__ import annotations
 
 from contextlib import ExitStack
 import json
+import threading
+from urllib.parse import urlencode
+from urllib.request import urlopen, Request
+from urllib.error import HTTPError
 from pathlib import Path
 import tempfile
 import unittest
@@ -113,6 +117,54 @@ class LiveStudioTests(unittest.TestCase):
         detail = console.details_html("token", mock_detail())
         self.assertIn('/studio/' + TASK_ID, detail)
         self.assertNotIn('name="gate" value="build"', detail)
+
+    def test_actual_local_http_studio_routes_preserve_origin_and_csp(self):
+        # Real loopback server, no worker and no writes. Mock only task reads.
+        with patch.object(live_studio, "idea_detail", return_value=mock_detail()), patch.object(
+                console, "preview_port", return_value=5173), patch.object(
+                console, "task_snapshot", return_value={
+                    "id": TASK_ID, "status": "PENDING",
+                    "next_stage": "discovery", "worker_state": "IDLE",
+                    "events": [], "outputs": [], "files": [], "last_event": ""
+                }), patch.object(console, "save_preview_port", return_value=5173) as saver:
+            with console.ConsoleServer(("127.0.0.1", 0), auto_run=False) as server:
+                thread = threading.Thread(target=server.serve_forever, daemon=True)
+                thread.start()
+                base = "http://127.0.0.1:" + str(server.server_port)
+                try:
+                    with urlopen(base + "/studio/" + TASK_ID, timeout=3) as response:
+                        html = response.read().decode("utf-8")
+                        csp = response.headers["Content-Security-Policy"]
+                    self.assertIn("Live Studio", html)
+                    self.assertIn("frame-src http://127.0.0.1:5173", csp)
+                    self.assertIn("script-src 'self'", csp)
+                    with urlopen(base + "/studio/" + TASK_ID + "/state", timeout=3) as response:
+                        data = json.loads(response.read().decode("utf-8"))
+                        self.assertIn("application/json", response.headers["Content-Type"])
+                    self.assertEqual(data["id"], TASK_ID)
+                    with urlopen(base + "/studio.js", timeout=3) as response:
+                        self.assertIn("textContent", response.read().decode("utf-8"))
+                    payload = urlencode({"csrf": server.csrf, "port": "5173"}).encode()
+                    request = Request(base + "/studio/" + TASK_ID + "/preview", data=payload,
+                                      headers={"Content-Type": "application/x-www-form-urlencoded",
+                                               "Origin": base},
+                                      method="POST")
+                    with urlopen(request, timeout=3) as response:
+                        self.assertIn("Live Studio", response.read().decode("utf-8"))
+                    saver.assert_called_once_with(TASK_ID, "5173",
+                                                  console_port=server.server_port)
+                    invalid_request = Request(
+                        base + "/studio/" + TASK_ID + "/preview", data=payload,
+                        headers={"Content-Type": "application/x-www-form-urlencoded",
+                                 "Origin": "http://outside.invalid"}, method="POST",
+                    )
+                    with self.assertRaises(HTTPError) as err:
+                        urlopen(invalid_request, timeout=3)
+                    self.assertEqual(err.exception.code, 403)
+                    saver.assert_called_once()
+                finally:
+                    server.shutdown()
+                    thread.join(timeout=5)
 
     def test_studio_scripts_avoid_innerhtml_and_support_safe_text_only(self):
         self.assertNotIn("innerHTML", live_studio.STUDIO_JS)

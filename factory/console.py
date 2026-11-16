@@ -20,6 +20,8 @@ from urllib.request import urlopen
 from urllib.error import URLError
 from factory import cli
 from factory.intake import create_idea, idea_detail, list_ideas
+from factory.ui_campus import (CAMPUS_CSS, campus_hero, approval_center, department_board,
+                               task_hero, stage_track, approval_panel)
 
 HOST = "127.0.0.1"
 MAX_BODY = 8192
@@ -88,7 +90,7 @@ footer{padding:32px 4px 10px;color:#7285ac;font-size:11px;display:flex;justify-c
 @media(max-width:900px){.hero{grid-template-columns:1fr}.orbit{display:none}.grid{grid-template-columns:1fr}}
 @media(max-width:600px){.shell{padding:0 14px 28px}.topbar{min-height:76px}.brand-text strong{font-size:14px}.brand-text small{font-size:8px}.mark{width:42px;height:42px}.topright .pill:not(.online){display:none}.hero{padding:39px 0 26px}.stats{gap:8px}.stat{padding:13px}.stat .num{font-size:23px}.stat .desc{font-size:10px}.panel{padding:18px}.grid{gap:13px}footer{flex-direction:column}}
 """
-
+STYLE += CAMPUS_CSS
 
 
 def page(title: str, content: str, csrf: str, *, auto_run: bool, message: str = "") -> bytes:
@@ -105,6 +107,9 @@ def page(title: str, content: str, csrf: str, *, auto_run: bool, message: str = 
         '<header class="topbar"><a class="brand" href="/" aria-label="item space AI homepage">'
         '<svg class="mark" viewBox="0 0 64 64" role="img" aria-label="Item Space AI logo"><defs><radialGradient id="orb" cx="28%" cy="25%"><stop stop-color="#dbf7ff"/><stop offset=".35" stop-color="#83b8ff"/><stop offset="1" stop-color="#6040b7"/></radialGradient></defs><circle cx="32" cy="32" r="17" fill="url(#orb)"/><ellipse cx="32" cy="33" rx="29" ry="11" fill="none" stroke="#72efff" stroke-width="3" transform="rotate(-26 32 33)"/><circle cx="54" cy="11" r="3" fill="#fff"/><circle cx="8" cy="18" r="2" fill="#b0a8ff"/></svg>'
         '<span class="brand-text"><strong>item space AI</strong><small>MISSION CONTROL · AIOS V3</small></span></a>'
+        '<nav class="topnav" aria-label="التنقل الرئيسي"><a class="nav-approval" href="/#approvals">◈ الموافقات</a>'
+        '<a href="/#missions">المشاريع</a><a href="/#departments">الأقسام</a>'
+        '<a href="/#mission-intake">مشروع جديد</a></nav>'
         '<div class="topright"><span class="pill online">LOCAL NODE</span>'
         '<span class="pill ' + label + '">' + state + '</span></div></header>'
         + banner + content
@@ -122,21 +127,16 @@ def home_html(csrf: str, records: list[dict]) -> str:
     active = sum(r["status"] in ("PENDING", "RUNNING", "INTERRUPTED") for r in records)
     waiting = sum(r["status"] == "WAITING_APPROVAL" for r in records)
     result = (
-        '<section class="hero"><div>'
-        '<p class="eyebrow">ITEM SPACE AI / COMMAND CENTER / 001</p>'
-        '<h1>فكرتك هي البداية.<br><em>ونحن نبني المستقبل.</em></h1>'
-        '<p class="lead">حوّل أفكارك إلى مشاريع تقنية منظمة. أدخل المهمة، تابع مراحلها '
-        'واحتفظ بقراراتك وتقارير التنفيذ في مركز تحكم واحد.</p>'
-        '</div><div class="orbit" aria-hidden="true">'
-        '<div class="planet"></div><span class="starpoint">✦</span></div></section>'
-        '<div class="stats">'
+        campus_hero()
+        + approval_center(records)
+        +         '<div class="stats">'
         '<div class="stat"><div class="num">' + str(len(records)) + '</div>'
         '<div class="desc">TOTAL MISSIONS</div></div>'
         '<div class="stat"><div class="num">' + str(active) + '</div>'
         '<div class="desc">ACTIVE / QUEUED</div></div>'
         '<div class="stat"><div class="num">' + str(waiting) + '</div>'
         '<div class="desc">AWAITING APPROVAL</div></div></div>'
-        '<div class="grid"><section class="panel">'
+        '<div class="grid mission-grid"><section class="panel" id="mission-intake">'
         '<div class="panel-head"><h2>✦ إطلاق مهمة جديدة</h2><span class="tag">NEW MISSION</span></div>'
         '<form method="post" action="/ideas">'
         + form_token(csrf)
@@ -156,7 +156,7 @@ def home_html(csrf: str, records: list[dict]) -> str:
         '<p class="hint">وضع المعاينة لا يشغّل الذكاء الاصطناعي ولا ينشر أي شيء. '
         'عند تفعيل العامل الآلي قد يتم إرسال المهمة إلى Codex ضمن حدود الاشتراك.</p>'
         '</form></section>'
-        '<section class="panel">'
+        '<section class="panel" id="missions">'
         '<div class="panel-head"><h2>◉ سجل المهام</h2><span class="tag">MISSION LOG</span></div>'
         '<div class="tasks">'
     )
@@ -177,18 +177,16 @@ def home_html(csrf: str, records: list[dict]) -> str:
                 + '</span></div>'
                 '<p>' + escape(r["goal_preview"]) + '</p></article>'
             )
-    return result + '</div></section></div>'
+    return result + '</div></section></div>' + department_board(records)
 
 
 def details_html(csrf: str, r: dict) -> str:
     status = escape(r["status"], quote=True)
     result = (
-        '<section class="hero"><div><p class="eyebrow">ITEM SPACE AI / MISSION DETAILS</p>'
-        '<h1>تفاصيل <em>المهمة</em></h1>'
-        '<p class="lead">راجع تقدم المشروع، نتائج المراحل والموافقات المطلوبة.</p>'
-        '</div><div class="orbit" aria-hidden="true"><div class="planet"></div>'
-        '<span class="starpoint">✦</span></div></section>'
-        '<a class="back" href="/">↩ العودة إلى مركز التحكم</a>'
+        task_hero(r)
+        + stage_track(r)
+        + approval_panel(csrf, r)
+        +         '<a class="back" href="/">↩ العودة إلى مركز التحكم</a>'
         '<section class="panel detail-block">'
         '<div class="panel-head"><h2>◈ سجل المهمة ' + escape(r["id"])
         + '</h2><span class="flag ' + status + '">' + escape(r["status"]) + '</span></div>'
@@ -217,25 +215,7 @@ def details_html(csrf: str, r: dict) -> str:
         + '<button class="action" type="submit">◈ فحص جاهزية GitHub PR</button></form>'
         '</section>'
     )
-    if r["status"] == "WAITING_APPROVAL" and r["next_stage"] == "implementation":
-        result += (
-            '<section class="panel detail-block"><h3>⚠ موافقة مرحلة البناء</h3>'
-            '<p class="warn">راجع تقارير التخطيط قبل الموافقة. بعدها يمكن للوكيل '
-            'تعديل الكود داخل Worktree معزول.</p>'
-            '<form method="post" action="/ideas/' + escape(r["id"], quote=True)
-            + '/approve">' + form_token(csrf)
-            + '<input type="hidden" name="gate" value="build">'
-            '<button class="action" type="submit">اعتماد بدء البرمجة</button></form></section>'
-        )
-    if r["status"] == "WAITING_APPROVAL" and r["next_stage"] == "release_gate":
-        result += (
-            '<section class="panel detail-block"><h3>⚠ اعتماد المراجعة النهائية</h3>'
-            '<p class="warn">توقيع إداري فقط، وليس نشراً للإنتاج.</p>'
-            '<form method="post" action="/ideas/' + escape(r["id"], quote=True)
-            + '/approve">' + form_token(csrf)
-            + '<input type="hidden" name="gate" value="release">'
-            '<button class="action" type="submit">اعتماد المراجعة</button></form></section>'
-        )
+    result += '<h2 id="reports">تقارير ومخرجات المراحل</h2>'
     for output in r["outputs"]:
         result += (
             '<section class="panel detail-block"><div class="panel-head"><h3>'

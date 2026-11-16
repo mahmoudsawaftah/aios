@@ -20,9 +20,14 @@ if ([string]::IsNullOrWhiteSpace($Desktop) -or -not (Test-Path -LiteralPath $Des
 }
 
 $IconPath = Join-Path $Root '.factory-runtime\assets\item-space-ai.ico'
-& python -m factory.branding --output $IconPath
-if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $IconPath -PathType Leaf)) {
-    throw 'Could not create the desktop icon. Check your Python installation.'
+Push-Location -LiteralPath $Root
+try {
+    & python -m factory.branding --output $IconPath
+    if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $IconPath -PathType Leaf)) {
+        throw 'Could not create the desktop icon. Check your Python installation.'
+    }
+} finally {
+    Pop-Location
 }
 
 $ShortcutPath = Join-Path $Desktop 'item space AI.lnk'

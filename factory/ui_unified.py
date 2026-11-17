@@ -180,6 +180,16 @@ COMMAND_JS = r"""'use strict';
       if (connection) connection.textContent = 'آخر حالة محفوظة · الاتصال متوقف';
     } finally { inflight = false; }
   };
+  document.querySelectorAll('a[href="#mission-intake"],a[href="#agents"]').forEach((a) => {
+    a.addEventListener('click', () => {
+      const target = document.getElementById(a.getAttribute('href').slice(1));
+      if (target && target.tagName === 'DETAILS') target.open = true;
+    });
+  });
+  if (location.hash === '#agents' || location.hash === '#mission-intake') {
+    const target = document.getElementById(location.hash.slice(1));
+    if (target && target.tagName === 'DETAILS') target.open = true;
+  }
   update();
   setInterval(update, 5000);
   document.addEventListener('visibilitychange', () => {if (!document.hidden) update();});
@@ -248,7 +258,7 @@ def home_html(csrf: str, records: list[dict], *, focus: str | None = None) -> tu
         '<a href="#agents"><span class="rail-icon">⌘</span> الوكلاء</a>'
         '<span class="rail-divider"></span>'
         '<a href="#mission-intake"><span class="rail-icon">＋</span> إنشاء مشروع</a>'
-        '</nav><main class="command-main">'
+        '</nav><div class="command-main">'
         '<section class="command-metrics" aria-label="ملخص المهام">'
         '<div class="command-metric"><span>إجمالي المهام</span><strong>'
         + str(len(records)) + '</strong></div>'
@@ -367,7 +377,7 @@ def home_html(csrf: str, records: list[dict], *, focus: str | None = None) -> tu
         '<button type="submit" class="action command-submit">إنشاء المشروع والمهمة</button>'
         '<p class="command-footer-note">إنشاء المهمة لا يشغّل Codex بحد ذاته. '
         'Acceptance Contract مطلوب قبل البناء وفق محرك v3.1.</p></form></div></details>'
-        '</main><aside class="command-inspector">'
+        '</div><aside class="command-inspector">'
         '<section class="command-card"><div class="command-card-header"><h2>صحة التنفيذ</h2>'
         '<small>REAL EVIDENCE</small></div>'
         '<div class="command-health">'

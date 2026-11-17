@@ -59,6 +59,18 @@ class Command2500Tests(unittest.TestCase):
         self.assertIn('action="/ideas"', html)
         self.assertNotIn('action="/ideas/' + TEST_ID + '/approve"', html)
 
+    def test_future_cockpit_visual_identity_is_distinct_and_accessible(self):
+        html, _ = self.render([mission()])
+        self.assertIn('UNIFIED OPERATIONS · COMMAND DECK 2500', html)
+        self.assertIn('class="command-hero-orbit" aria-hidden="true"', html)
+        self.assertIn('class="command-hero-meta"', html)
+        self.assertIn('id="workspace" aria-label="مركز القيادة"', html)
+        self.assertIn('href="#mission-intake"', html)
+        self.assertIn(".command-hero-orbit{", ui_unified.COMMAND_CSS)
+        self.assertIn("prefers-reduced-motion:reduce", ui_unified.COMMAND_CSS)
+        self.assertIn("max-width:700px", ui_unified.COMMAND_CSS)
+        self.assertNotIn("https://", ui_unified.COMMAND_CSS)
+
     def test_only_explicitly_configured_preview_port_embeds_app(self):
         with patch.object(ui_unified, "preview_port", return_value=5173), patch.object(
                 ui_unified, "worker_state", return_value="IDLE"), patch.object(

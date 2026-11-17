@@ -100,7 +100,7 @@ STYLE += CAMPUS_CSS + STUDIO_CSS + OFFICE_CSS + COMMAND_CSS
 
 
 def page(title: str, content: str, csrf: str, *, auto_run: bool, message: str = "") -> bytes:
-    state = ('LIVE AGENT MODE' if auto_run else 'SAFE PREVIEW')
+    state = ('AUTO-RUN ENABLED' if auto_run else 'AUTO-RUN DISABLED')
     label = 'mode-on' if auto_run else 'mode-off'
     banner = '<div class="panel warn">' + escape(message) + '</div>' if message else ''
     return (

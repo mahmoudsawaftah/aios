@@ -152,6 +152,61 @@ body:before{display:none}body:after{display:none}
 @media(max-width:1200px){.command-grid{grid-template-columns:142px minmax(0,1fr)}.command-inspector{grid-column:2;position:static;grid-template-columns:1fr 1fr}.command-working-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:930px){.command-grid{grid-template-columns:1fr}.command-rail{position:static;display:flex;overflow-x:auto;white-space:nowrap;gap:4px}.command-rail .rail-caption,.command-rail .rail-divider{display:none}.command-rail a{flex:none;padding:8px 10px}.command-inspector{grid-column:1}.command-intro{padding-top:18px}.command-detail-content .office-layout{grid-template-columns:1fr}.command-rail{scrollbar-width:thin}}
 @media(max-width:720px){.shell{padding-inline:13px}.topbar{height:68px;min-height:68px}.topright .pill:not(.online){display:none}.command-working-grid{grid-template-columns:1fr}.command-metrics{gap:7px}.command-metric{padding:11px}.command-metric span{font-size:10px}.command-metric strong{font-size:20px}.command-inspector{grid-template-columns:1fr}.command-card{padding:15px}.command-intro{align-items:start;flex-direction:column}.command-form-grid{grid-template-columns:1fr}.command-headline h1{font-size:26px}.command-preview-screen iframe{height:260px}.command-quick-status{display:none}}
+/* Command Deck 2500 — high-contrast architectural redesign.
+   Visual details are CSS-native; no external textures, fonts, or GPU-heavy effects. */
+body{background:#060a12;color:#e6f3f7}
+body::selection{background:#275e64;color:#fff}
+.shell{max-width:1800px;min-height:100vh}
+.topbar{border:1px solid #204558;border-top:0;border-radius:0 0 18px 18px;background:linear-gradient(115deg,rgba(11,26,40,.98),rgba(8,14,27,.98));box-shadow:0 16px 30px rgba(0,0,0,.16)}
+.brand .mark{filter:drop-shadow(0 0 8px rgba(84,239,218,.58))}
+.brand-text small{color:#5be6d7;letter-spacing:1.9px;font-weight:850}
+.command-intro{position:relative;isolation:isolate;min-height:268px;display:grid;grid-template-columns:minmax(0,1fr) 240px auto;align-items:center;gap:22px;border:1px solid #2e6070;border-radius:23px;padding:36px 31px;margin:25px 0 2px;overflow:hidden;background:radial-gradient(circle at 73% 49%,rgba(43,136,145,.20),transparent 30%),linear-gradient(120deg,#112b3b 0%,#0b1828 53%,#101b32 100%);box-shadow:inset 0 0 0 1px rgba(176,255,237,.04),0 25px 65px rgba(0,0,0,.27)}
+.command-intro:before{content:"";position:absolute;inset:0;pointer-events:none;z-index:-1;opacity:.28;background:linear-gradient(90deg,transparent 98%,rgba(96,216,214,.18) 99%),linear-gradient(transparent 98%,rgba(96,216,214,.18) 99%);background-size:38px 38px;mask-image:linear-gradient(90deg,transparent 8%,#000 90%)}
+.command-intro:after{content:"2500";position:absolute;font-size:190px;font-weight:900;letter-spacing:-18px;line-height:1;left:2%;bottom:-49px;opacity:.036;color:#a9fff1;pointer-events:none}
+.command-headline{z-index:1;min-width:0}
+.command-kicker{display:flex;align-items:center;gap:9px;color:#8bdfd7;font:800 10px/1.6 Consolas,monospace;letter-spacing:2px;text-transform:uppercase}
+.command-signal{width:7px;height:7px;border-radius:100%;background:#a5fae7;box-shadow:0 0 0 4px rgba(108,238,211,.08),0 0 15px rgba(108,238,211,.7);flex:none}
+.command-headline h1{font-weight:830;letter-spacing:-1.7px;line-height:1.2;font-size:clamp(30px,3.3vw,48px);margin:18px 0 11px}
+.command-headline h1 em{font-style:normal;background:linear-gradient(100deg,#9cfff0,#8ebfff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.command-headline p{font-size:13px;color:#b3cdd8;max-width:660px;margin:0;line-height:1.85}
+.command-hero-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:20px}
+.command-hero-meta span{font:700 9px/1.5 Consolas,monospace;letter-spacing:1px;color:#8eabbc;padding:5px 8px;border:1px solid rgba(117,201,207,.18);border-radius:6px;background:rgba(7,23,34,.3)}
+.command-new-btn{position:relative;z-index:2;background:linear-gradient(110deg,#afffed,#81d6ef);color:#07222c!important;font-weight:850;border:none;border-radius:12px;padding:13px 19px;box-shadow:0 8px 22px rgba(47,155,156,.16);text-align:center}
+.command-new-btn:hover{background:#d9fff7;color:#041923!important;transform:translateY(-1px)}
+.command-hero-orbit{position:relative;height:206px;width:206px;justify-self:center;border-radius:100%;background:radial-gradient(circle,rgba(83,226,210,.09) 0%,rgba(83,226,210,.05) 37%,transparent 67%);filter:drop-shadow(0 0 17px rgba(28,185,195,.13))}
+.command-orbit-ring{position:absolute;inset:8px;border-radius:50%;border:1px solid rgba(123,236,224,.3)}
+.command-orbit-ring.outer{border-top:3px solid #9cf7e7;border-left:1px dashed rgba(142,239,238,.3);animation:command-orbit 38s linear infinite}
+.command-orbit-ring.outer:before{content:"";position:absolute;left:28px;top:17px;width:8px;height:8px;border-radius:100%;background:#d9fff7;box-shadow:0 0 13px #76e9dc}
+.command-orbit-ring.inner{inset:28px;border-color:#4f9dab;border-right:2px solid #96c7ff;animation:command-orbit 52s linear infinite reverse}
+.command-orbit-core{position:absolute;inset:53px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(circle at 45% 35%,#2a777c,#0a2d3d 70%);border:1px solid #73bfc5;box-shadow:inset 0 0 25px rgba(130,245,225,.12),0 0 25px rgba(103,222,213,.14)}
+.command-orbit-core b{font:900 33px/1 Consolas,monospace;letter-spacing:-2px;color:#dbfff7}
+.command-orbit-core small{font:700 9px/1.5 Consolas,monospace;letter-spacing:1px;color:#81d9d3}
+.command-orbit-beam{position:absolute;inset:0;border-radius:50%;border:1px dotted rgba(112,218,229,.3)}
+@keyframes command-orbit{to{transform:rotate(360deg)}}
+.command-grid{gap:16px;padding-top:17px}
+.command-rail{background:linear-gradient(180deg,#0e2031,#0a1423);border:1px solid #2a5363;box-shadow:inset 3px 0 rgba(79,192,185,.1)}
+.command-rail .rail-caption{color:#68b0c0}
+.command-rail a{font-weight:650}
+.command-rail a.rail-active{border:1px solid #36767a;background:linear-gradient(90deg,#153f47,#102c3f);box-shadow:inset 3px 0 #8de8d6;color:#c6fff3}
+.command-card{position:relative;background:linear-gradient(145deg,#112335,#0d1929);border-color:#294d60;box-shadow:inset 0 1px rgba(202,255,241,.035)}
+.command-card::before{content:"";position:absolute;inset:12px auto auto 12px;width:21px;height:21px;border-left:1px solid rgba(126,236,220,.25);border-top:1px solid rgba(126,236,220,.25);pointer-events:none}
+.command-card-header{border-bottom:1px solid #264153;padding-bottom:12px}
+.command-card-header h2{letter-spacing:.1px}
+.command-metric{background:linear-gradient(115deg,#122c3b,#0d1d2e);border-color:#2b5867;padding:17px 18px;min-height:83px}
+.command-metric strong{font:800 30px/1 Consolas,monospace;color:#c8f7ed}
+.command-metric.priority{background:linear-gradient(115deg,#362c2a,#171b2b);border-color:#745f4c}
+.command-focus-heading{border-inline-start:3px solid #76e9d4;padding-inline-start:16px}
+.command-focus-heading a{font-size:21px}
+.command-inspector .command-card:first-child{border-top:2px solid #58b8b5}
+.command-preview-screen{border-radius:11px;border-color:#386b77;background:#0b1e29}
+.command-preview-placeholder{background:radial-gradient(circle at center,#193e4a,#0e1b2b 63%)}
+.command-detail-toggle{border-color:#294d61;background:#0d1b2b}
+.command-detail-toggle[open] summary{background:#132e3a}
+.command-approval-item{background:linear-gradient(110deg,#2d282a,#1c1e29)}
+@media(max-width:1490px){.command-intro{grid-template-columns:minmax(0,1fr) 170px auto}.command-hero-orbit{transform:scale(.82);width:170px;height:170px}.command-new-btn{padding-inline:13px}}
+@media(max-width:1130px){.command-intro{grid-template-columns:minmax(0,1fr) 180px}.command-intro>.command-new-btn{grid-column:1/-1;justify-self:start}.command-hero-orbit{grid-column:2;grid-row:1;transform:scale(.86)}}
+@media(max-width:700px){.command-intro{display:block;padding:25px 19px;min-height:0;border-radius:17px}.command-hero-orbit{display:none}.command-headline h1{font-size:29px;letter-spacing:-1px}.command-hero-meta{margin-bottom:16px}.command-new-btn{display:inline-block}.command-metric{min-height:65px;padding:12px 10px}.command-metric strong{font-size:22px}.command-hero-meta span:nth-child(n+3){display:none}}
+
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 """
 
@@ -347,11 +402,21 @@ def home_html(csrf: str, records: list[dict], *, focus: str | None = None) -> tu
                           verification["stage"] == "final")
     worker = worker_state()
     result = (
-        '<section class="command-intro" id="workspace"><div class="command-headline">'
-        '<p class="eyebrow">ITEM SPACE AI / UNIFIED COMMAND / YEAR 2500</p>'
-        '<h1>كل شغلك. <em>مركز قيادة واحد.</em></h1>'
-        '<p>المهام، قراراتك، المعاينة الحية، والوكلاء — بدون صفحات متكررة أو معلومات شكلية.</p>'
-        '</div><a class="command-new-btn" href="#mission-intake">＋ مهمة جديدة</a></section>'
+        '<section class="command-intro" id="workspace" aria-label="مركز القيادة">'
+        '<div class="command-headline">'
+        '<div class="command-kicker"><span class="command-signal" aria-hidden="true"></span>'
+        'UNIFIED OPERATIONS · COMMAND DECK 2500</div>'
+        '<h1>مركز قيادة <em>جيل المستقبل.</em></h1>'
+        '<p>مهمتك، فريق الـAI، الموافقات والتحقق — كل قرار في مكان واحد.</p>'
+        '<div class="command-hero-meta"><span>01 / MISSION CONTROL</span>'
+        '<span>LOCAL FIRST</span><span>READ-ONLY TELEMETRY</span></div></div>'
+        '<div class="command-hero-orbit" aria-hidden="true">'
+        '<div class="command-orbit-ring outer"></div>'
+        '<div class="command-orbit-ring inner"></div>'
+        '<div class="command-orbit-core"><b>ISA</b><small>AI / OS</small></div>'
+        '<div class="command-orbit-beam"></div></div>'
+        '<a class="command-new-btn" href="#mission-intake">＋ إطلاق مهمة</a>'
+        '</section>'
         '<div class="command-grid"><nav class="command-rail" aria-label="أقسام مركز القيادة">'
         '<span class="rail-caption">NAVIGATION</span>'
         '<a class="rail-active" href="#workspace"><span class="rail-icon">◈</span> القيادة</a>'

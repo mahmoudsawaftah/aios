@@ -156,6 +156,16 @@ body:before{display:none}body:after{display:none}
 
 COMMAND_JS = r"""'use strict';
 (() => {
+  document.querySelectorAll('a[href="#mission-intake"],a[href="#agents"]').forEach((a) => {
+    a.addEventListener('click', () => {
+      const target = document.getElementById(a.getAttribute('href').slice(1));
+      if (target && target.tagName === 'DETAILS') target.open = true;
+    });
+  });
+  if (location.hash === '#agents' || location.hash === '#mission-intake') {
+    const target = document.getElementById(location.hash.slice(1));
+    if (target && target.tagName === 'DETAILS') target.open = true;
+  }
   const root = document.querySelector('[data-command-task]');
   if (!root) return;
   const taskId = root.getAttribute('data-command-task');
@@ -180,16 +190,6 @@ COMMAND_JS = r"""'use strict';
       if (connection) connection.textContent = 'آخر حالة محفوظة · الاتصال متوقف';
     } finally { inflight = false; }
   };
-  document.querySelectorAll('a[href="#mission-intake"],a[href="#agents"]').forEach((a) => {
-    a.addEventListener('click', () => {
-      const target = document.getElementById(a.getAttribute('href').slice(1));
-      if (target && target.tagName === 'DETAILS') target.open = true;
-    });
-  });
-  if (location.hash === '#agents' || location.hash === '#mission-intake') {
-    const target = document.getElementById(location.hash.slice(1));
-    if (target && target.tagName === 'DETAILS') target.open = true;
-  }
   update();
   setInterval(update, 5000);
   document.addEventListener('visibilitychange', () => {if (!document.hidden) update();});

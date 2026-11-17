@@ -235,6 +235,46 @@ def _verification(task_id: str) -> dict:
         return {"verdict": "NOT VERIFIED", "stage": "—", "sha": ""}
 
 
+
+def command_snapshot(focus: str | None = None) -> dict:
+    """Bounded, read-only snapshot for the dashboard, without goals or code.
+
+    Last worker and acceptance states are recorded evidence, not a claim that
+    a currently running agent passed checks or that an app was deployed.
+    """
+    from factory.intake import list_ideas
+
+    records = list_ideas(limit=50)
+    active = _pick_task(records, focus)
+    verdict = (_verification(active["id"]) if active else
+               {"verdict": "NOT VERIFIED", "stage": "—", "sha": ""})
+    approved_final = bool(active and active["status"] == "DONE" and
+                          verdict["verdict"] == "ACCEPTED" and
+                          verdict["stage"] == "final")
+    return {
+        "task": ({
+            "id": active["id"],
+            "status": active["status"][:40],
+            "stage": active["stage"][:40],
+        } if active else None),
+        "metrics": {
+            "total": len(records),
+            "running": sum(r["status"] == "RUNNING" for r in records),
+            "approvals": sum(r["status"] == "WAITING_APPROVAL" for r in records),
+            "needs_work": sum(r["status"] in ("NEEDS_WORK", "BLOCKED", "FAILED")
+                              for r in records),
+        },
+        "approvals": [
+            {"id": r["id"], "title": r["title"][:100], "stage": r["stage"][:40]}
+            for r in records
+            if r["status"] == "WAITING_APPROVAL" and TASK_ID.fullmatch(r["id"])
+        ],
+        "verification": verdict,
+        "accepted_final": approved_final,
+        "worker": worker_state()[:40],
+    }
+
+
 def home_html(csrf: str, records: list[dict], *, focus: str | None = None) -> tuple[str, int | None]:
     """Return HTML and explicitly configured iframe port for a restricted CSP."""
     active = _pick_task(records, focus)

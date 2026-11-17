@@ -397,7 +397,7 @@ def home_html(csrf: str, records: list[dict], *, focus: str | None = None) -> tu
         '<div class="command-health-line"><span>آخر Worker state</span><strong>'
         + escape(worker[:40]) + '</strong></div>'
         '<div class="command-health-line"><span>آخر نتيجة قبول</span><strong'
-        + (' class="ok"' if verification["verdict"] == "ACCEPTED" else ' class="warn"')
+        + (' class="ok"' if accepted_final else ' class="warn"')
         + '>' + escape(verification["verdict"]) + '</strong></div>'
         '<div class="command-health-line"><span>مرحلة التحقق</span><strong>'
         + escape(verification["stage"]) + '</strong></div>'

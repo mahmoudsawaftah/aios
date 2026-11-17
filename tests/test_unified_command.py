@@ -191,6 +191,37 @@ class Command2500Tests(unittest.TestCase):
         self.assertIn("prefers-reduced-motion", ui_unified.COMMAND_CSS)
         self.assertIn("@media(max-width:720px)", ui_unified.COMMAND_CSS)
 
+    def test_live_command_snapshot_is_grounded_and_redacts_project_secrets(self):
+        from factory import intake
+        records = [
+            mission(status="WAITING_APPROVAL", stage="implementation",
+                    error="DO_NOT_EXPOSE_THIS", goal_preview="PRIVATE_GOAL"),
+        ]
+        with patch.object(intake, "list_ideas", return_value=records) as listed, \
+             patch.object(ui_unified, "_verification", return_value={
+                 "verdict": "NEEDS_WORK", "stage": "qa", "sha": "123abc"}), \
+             patch.object(ui_unified, "worker_state", return_value="IDLE"):
+            result = ui_unified.command_snapshot(TEST_ID)
+        listed.assert_called_once_with(limit=50)
+        self.assertEqual(result["metrics"]["approvals"], 1)
+        self.assertEqual(result["task"]["id"], TEST_ID)
+        self.assertEqual(result["verification"]["verdict"], "NEEDS_WORK")
+        self.assertFalse(result["accepted_final"])
+        serialized = json.dumps(result)
+        self.assertNotIn("PRIVATE_GOAL", serialized)
+        self.assertNotIn("DO_NOT_EXPOSE_THIS", serialized)
+        self.assertNotIn("project", serialized)
+
+    def test_command_js_updates_approval_queue_without_inserting_html(self):
+        script = ui_unified.COMMAND_JS
+        self.assertIn("fetch(endpoint", script)
+        self.assertIn("'/command/state'", script)
+        self.assertIn("document.createElement('article')", script)
+        self.assertIn("list.replaceChildren()", script)
+        self.assertIn("d.accepted_final", script)
+        self.assertNotIn("innerHTML", script)
+        self.assertNotIn("location.assign('http", script)
+
     def test_real_http_route_has_scoped_csp_without_exposing_task_state_for_writes(self):
         with patch.object(console, "list_ideas", return_value=[mission()]), patch.object(
                 ui_unified, "preview_port", return_value=3000), patch.object(
@@ -211,6 +242,19 @@ class Command2500Tests(unittest.TestCase):
                     self.assertIn("frame-src http://127.0.0.1:3000", csp)
                     with urlopen(url + "/command.js", timeout=3) as r:
                         self.assertIn("textContent", r.read().decode("utf-8"))
+                    with patch.object(console, "command_snapshot", return_value={
+                        "task": {"id": TEST_ID, "status": "NEEDS_WORK",
+                                 "stage": "qa"},
+                        "metrics": {"total": 1, "running": 0, "approvals": 0,
+                                    "needs_work": 1},
+                        "approvals": [], "verification": {
+                            "verdict": "NEEDS_WORK", "stage": "qa", "sha": ""},
+                        "accepted_final": False, "worker": "IDLE",
+                    }):
+                        with urlopen(url + "/command/state?task=" + TEST_ID, timeout=3) as r:
+                            state = json.loads(r.read().decode("utf-8"))
+                            self.assertIn("application/json", r.headers["Content-Type"])
+                    self.assertEqual(state["task"]["status"], "NEEDS_WORK")
                 finally:
                     server.shutdown()
                     thread.join(timeout=5)

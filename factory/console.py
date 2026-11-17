@@ -25,6 +25,7 @@ from factory.ui_campus import (CAMPUS_CSS, campus_hero, approval_center, departm
 from factory.live_studio import (STUDIO_CSS, STUDIO_JS, preview_port, save_preview_port,
                                  studio_html, task_snapshot)
 import json
+from factory.pixel_office import OFFICE_CSS, OFFICE_JS, office_html, office_snapshot
 
 HOST = "127.0.0.1"
 MAX_BODY = 8192
@@ -93,7 +94,7 @@ footer{padding:32px 4px 10px;color:#7285ac;font-size:11px;display:flex;justify-c
 @media(max-width:900px){.hero{grid-template-columns:1fr}.orbit{display:none}.grid{grid-template-columns:1fr}}
 @media(max-width:600px){.shell{padding:0 14px 28px}.topbar{min-height:76px}.brand-text strong{font-size:14px}.brand-text small{font-size:8px}.mark{width:42px;height:42px}.topright .pill:not(.online){display:none}.hero{padding:39px 0 26px}.stats{gap:8px}.stat{padding:13px}.stat .num{font-size:23px}.stat .desc{font-size:10px}.panel{padding:18px}.grid{gap:13px}footer{flex-direction:column}}
 """
-STYLE += CAMPUS_CSS + STUDIO_CSS
+STYLE += CAMPUS_CSS + STUDIO_CSS + OFFICE_CSS
 
 
 def page(title: str, content: str, csrf: str, *, auto_run: bool, message: str = "") -> bytes:
@@ -111,7 +112,8 @@ def page(title: str, content: str, csrf: str, *, auto_run: bool, message: str = 
         '<svg class="mark" viewBox="0 0 64 64" role="img" aria-label="Item Space AI logo"><defs><radialGradient id="orb" cx="28%" cy="25%"><stop stop-color="#dbf7ff"/><stop offset=".35" stop-color="#83b8ff"/><stop offset="1" stop-color="#6040b7"/></radialGradient></defs><circle cx="32" cy="32" r="17" fill="url(#orb)"/><ellipse cx="32" cy="33" rx="29" ry="11" fill="none" stroke="#72efff" stroke-width="3" transform="rotate(-26 32 33)"/><circle cx="54" cy="11" r="3" fill="#fff"/><circle cx="8" cy="18" r="2" fill="#b0a8ff"/></svg>'
         '<span class="brand-text"><strong>item space AI</strong><small>MISSION CONTROL · AIOS V3</small></span></a>'
         '<nav class="topnav" aria-label="التنقل الرئيسي"><a class="nav-approval" href="/#approvals">◈ الموافقات</a>'
-        '<a href="/#missions">المشاريع</a><a href="/#departments">الأقسام</a>'
+        '<a href="/office">مكتب الـAgents</a><a href="/#missions">المشاريع</a>'
+        '<a href="/#departments">الأقسام</a>'
         '<a href="/#mission-intake">مشروع جديد</a></nav>'
         '<div class="topright"><span class="pill online">LOCAL NODE</span>'
         '<span class="pill ' + label + '">' + state + '</span></div></header>'
@@ -307,6 +309,17 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             return
         path = urlsplit(self.path).path
         try:
+            if path == "/office.js":
+                self._send(200, OFFICE_JS.encode("utf-8"),
+                           content_type="application/javascript; charset=utf-8")
+                return
+            if path == "/office/state":
+                payload = json.dumps(office_snapshot(), ensure_ascii=False).encode("utf-8")
+                self._send(200, payload, content_type="application/json; charset=utf-8")
+                return
+            if path == "/office":
+                self._render("Pixel Office", office_html(), studio=True)
+                return
             if path == "/studio.js":
                 self._send(200, STUDIO_JS.encode("utf-8"),
                            content_type="application/javascript; charset=utf-8")

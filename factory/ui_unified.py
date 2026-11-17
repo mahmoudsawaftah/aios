@@ -68,6 +68,7 @@ body:before{display:none}body:after{display:none}
 .command-badge[data-state="NEEDS_WORK"],.command-badge[data-state="BLOCKED"],.command-badge[data-state="FAILED"]{border-color:#92565c;color:#f2b5b5}
 .command-badge[data-state="RUNNING"]{border-color:#3d8c80;color:#a1efd2}
 .command-badge[data-state="DONE"]{border-color:#487965;color:#a1dfb6}
+.command-badge[data-state="LEGACY_DONE"]{border-color:#a27b4d;color:#f2d1a3}
 .command-focus-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .command-focus-heading a{color:#e5f6fa;max-width:85%;font-size:19px;font-weight:760;overflow-wrap:anywhere}
 .command-focus-heading a:hover{color:#9df4e9}
@@ -168,6 +169,7 @@ COMMAND_JS = r"""'use strict';
   }
   const root = document.querySelector('[data-command-task]');
   if (!root) return;
+  const accepted = root.getAttribute('data-accepted') === 'true';
   const taskId = root.getAttribute('data-command-task');
   if (!/^[0-9a-f]{12}$/.test(taskId)) return;
   let inflight = false;
@@ -182,7 +184,11 @@ COMMAND_JS = r"""'use strict';
       const status = document.getElementById('command-task-state');
       const stage = document.getElementById('command-task-stage');
       const connection = document.getElementById('command-connection');
-      if (status) { status.textContent = String(d.status || 'UNKNOWN'); status.dataset.state = d.status || 'UNKNOWN'; }
+      if (status) {
+        const state = String(d.status || 'UNKNOWN');
+        status.textContent = state === 'DONE' && !accepted ? 'DONE · غير متحقق' : state;
+        status.dataset.state = state === 'DONE' && !accepted ? 'LEGACY_DONE' : state;
+      }
       if (stage) stage.textContent = String(d.next_stage || '—');
       if (connection) connection.textContent = 'متصل · حالة فعلية';
     } catch (_) {
@@ -242,6 +248,9 @@ def home_html(csrf: str, records: list[dict], *, focus: str | None = None) -> tu
         except (OSError, ValueError, TypeError):
             port = None
     verification = _verification(active["id"]) if active else {"verdict": "—", "stage": "—", "sha": ""}
+    accepted_final = bool(active and active["status"] == "DONE" and
+                          verification["verdict"] == "ACCEPTED" and
+                          verification["stage"] == "final")
     worker = worker_state()
     result = (
         '<section class="command-intro" id="workspace"><div class="command-headline">'
@@ -273,11 +282,15 @@ def home_html(csrf: str, records: list[dict], *, focus: str | None = None) -> tu
     if active:
         tid = escape(active["id"], quote=True)
         result += (
-            '<div data-command-task="' + tid + '">'
-            '<div class="command-focus-heading"><a href="/ideas/' + tid + '">'
+            '<div data-command-task="' + tid + '" data-accepted="'
+            + ('true' if accepted_final else 'false') + '">'
+            '<div class="command-focus-heading"><a href="/ideas/' + tid +">'
             + escape(active["title"]) + '</a>'
             '<span id="command-task-state" class="command-badge" data-state="'
-            + escape(active["status"], quote=True) + '">' + escape(active["status"]) + '</span></div>'
+            + ('LEGACY_DONE' if active["status"] == "DONE" and not accepted_final
+               else escape(active["status"], quote=True))
+            + '">' + ('DONE · غير متحقق' if active["status"] == "DONE" and not accepted_final
+                     else escape(active["status"])) + '</span></div>'
             '<div class="command-focus-meta">'
             '<span class="command-chip">المرحلة: <strong id="command-task-stage">'
             + escape(active["stage"]) + '</strong></span>'
@@ -383,7 +396,7 @@ def home_html(csrf: str, records: list[dict], *, focus: str | None = None) -> tu
         '<div class="command-health">'
         '<div class="command-health-line"><span>آخر Worker state</span><strong>'
         + escape(worker[:40]) + '</strong></div>'
-        '<div class="command-health-line"><span>نتيجة القبول</span><strong'
+        '<div class="command-health-line"><span>آخر نتيجة قبول</span><strong'
         + (' class="ok"' if verification["verdict"] == "ACCEPTED" else ' class="warn"')
         + '>' + escape(verification["verdict"]) + '</strong></div>'
         '<div class="command-health-line"><span>مرحلة التحقق</span><strong>'

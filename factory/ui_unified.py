@@ -319,8 +319,8 @@ def home_html(csrf: str, records: list[dict], *, focus: str | None = None) -> tu
         result += '<a class="command-link secondary" href="#mission-intake">ابدأ مشروعك</a>'
     result += '<small>لا يوجد نشر تلقائي أو تشغيل خفي للسيرفر</small></div></section>'
     result += (
-        '<section class="command-card" id="approvals">'
-        '<div class="command-card-header"><h2>◈ مركز القرارات</h2>'
+        '<section class="command-card" id="approvals" aria-labelledby="approval-center-title">'
+        '<div class="command-card-header"><h2 id="approval-center-title">◈ مركز القرارات</h2>'
         '<span class="command-badge" data-state="WAITING_APPROVAL">'
         + str(len(waiting)) + ' معلّقة</span></div>'
         '<div class="command-approval-stack">'

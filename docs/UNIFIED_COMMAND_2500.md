@@ -35,6 +35,9 @@ my approval, what was verified, and what should happen next?**
 ## Data trust boundaries
 
 - The dashboard reads tasks from `factory.intake.list_ideas()`.
+- `GET /command/state` refreshes the task, approval count/list, stored
+  acceptance verdict and last recorded worker state every five seconds.
+  The JSON intentionally omits full task goals, local project paths and errors.
 - The acceptance summary reads `acceptance_stage_results` through
   `cli.managed_readonly_connect()` when the v3.1 fix has installed that table.
 - A missing acceptance table or record means **NOT VERIFIED**, including
@@ -52,8 +55,10 @@ my approval, what was verified, and what should happen next?**
 
 - `factory/ui_unified.py`: new visual system, centralized home/task HTML,
   optional real acceptance verdict, safe local preview and polling script.
-- `factory/console.py`: lightweight adapter to new views and `/command.js`; no
+- `factory/console.py`: lightweight adapter to new views and
+  `/command.js`/`/command/state`; no
   changes to approval, worker or existing helper API endpoints.
+- `factory/pixel_office.py`: pauses hidden-office rendering and polling.
 - `tests/test_unified_command.py`: UX and safety regression test coverage.
 - `docs/UNIFIED_COMMAND_2500.md`: design contract and release plan.
 
@@ -106,3 +111,5 @@ Then open `http://127.0.0.1:8877/`.
   editor, server manager or true live multi-agent session tracker.
 - The owner should validate real server/mode behavior and report any visual
   regressions before adoption.
+- Polling uses a five-second cadence and does not represent websocket streaming
+  or true per-agent live process diagnostics.

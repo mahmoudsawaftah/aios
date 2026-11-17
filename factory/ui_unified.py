@@ -388,7 +388,7 @@ def home_html(csrf: str, records: list[dict], *, focus: str | None = None) -> tu
         'placeholder="صف الهدف والحدود، وضع المواصفات التفصيلية داخل مستودع المشروع...">'
         '</textarea></div>'
         '<button type="submit" class="action command-submit">إنشاء المشروع والمهمة</button>'
-        '<p class="command-footer-note">إنشاء المهمة لا يشغّل Codex بحد ذاته. '
+        '<p class="command-footer-note">إنشاء المهمة يضيفها للطابور؛ قد يبدأ الـWorker تلقائياً إذا كان Auto-run مفعّلاً. '
         'Acceptance Contract مطلوب قبل البناء وفق محرك v3.1.</p></form></div></details>'
         '</div><aside class="command-inspector">'
         '<section class="command-card"><div class="command-card-header"><h2>صحة التنفيذ</h2>'

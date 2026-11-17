@@ -67,7 +67,7 @@ def main(argv=None):
     try:
         with console.ConsoleServer(("127.0.0.1", args.port), auto_run=False) as server:
             url = "http://127.0.0.1:" + str(server.server_port) + "/"
-            print("Read-only Item Space AI Operations Campus: " + url, flush=True)
+            print("Read-only Item Space AI Unified Command 2500: " + url, flush=True)
             print("Worker OFF | Active tasks READ-ONLY | Preview ports stored separately", flush=True)
             if args.open_browser:
                 threading.Thread(target=webbrowser.open_new_tab, args=(url,),

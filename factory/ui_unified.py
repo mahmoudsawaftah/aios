@@ -157,48 +157,102 @@ body:before{display:none}body:after{display:none}
 
 COMMAND_JS = r"""'use strict';
 (() => {
+  // Workspace navigation always works, including when no task exists yet.
   document.querySelectorAll('a[href="#mission-intake"],a[href="#agents"]').forEach((a) => {
     a.addEventListener('click', () => {
-      const target = document.getElementById(a.getAttribute('href').slice(1));
-      if (target && target.tagName === 'DETAILS') target.open = true;
+      const id = a.getAttribute('href').slice(1);
+      const panel = document.getElementById(id);
+      if (panel && panel.tagName === 'DETAILS') panel.open = true;
     });
   });
   if (location.hash === '#agents' || location.hash === '#mission-intake') {
-    const target = document.getElementById(location.hash.slice(1));
-    if (target && target.tagName === 'DETAILS') target.open = true;
+    const panel = document.getElementById(location.hash.slice(1));
+    if (panel && panel.tagName === 'DETAILS') panel.open = true;
   }
   const root = document.querySelector('[data-command-task]');
-  if (!root) return;
-  const accepted = root.getAttribute('data-accepted') === 'true';
-  const taskId = root.getAttribute('data-command-task');
-  if (!/^[0-9a-f]{12}$/.test(taskId)) return;
+  const selected = root ? root.getAttribute('data-command-task') : '';
+  const taskId = /^[0-9a-f]{12}$/.test(selected) ? selected : '';
+  const byId = (id) => document.getElementById(id);
   let inflight = false;
+  let approvalSignature = null;
+
+  function displayApprovals(items) {
+    const list = byId('command-approval-list');
+    if (!list || !Array.isArray(items)) return;
+    const safeItems = items.filter(x => x && /^[0-9a-f]{12}$/.test(x.id)).slice(0,50);
+    const signature = JSON.stringify(safeItems);
+    if (signature === approvalSignature) return;
+    approvalSignature = signature;
+    list.replaceChildren();
+    if (!safeItems.length) {
+      const empty = document.createElement('div');
+      empty.className = 'command-approval-empty';
+      empty.textContent = '✓ لا توجد موافقات معلّقة الآن.';
+      list.appendChild(empty);
+      return;
+    }
+    safeItems.forEach((x) => {
+      const article = document.createElement('article');
+      article.className = 'command-approval-item';
+      const name = document.createElement('strong');
+      name.textContent = String(x.title || 'مهمة');
+      const stage = document.createElement('p');
+      stage.textContent = String(x.stage || '—') + ' · مراجعة إلزامية';
+      const action = document.createElement('a');
+      action.href = '/ideas/' + x.id + '#task-approval';
+      action.textContent = 'افتح القرار والتقارير ←';
+      article.append(name, stage, action);
+      list.appendChild(article);
+    });
+  }
+  function setText(id, value) {
+    const el = byId(id);
+    if (el) el.textContent = String(value ?? '—');
+  }
+
   const update = async () => {
     if (inflight || document.hidden) return;
     inflight = true;
     try {
-      const r = await fetch('/studio/' + taskId + '/state', {cache:'no-store'});
-      if (!r.ok) throw Error('No live state');
+      const endpoint = '/command/state' + (taskId ? '?task=' + taskId : '');
+      const r = await fetch(endpoint, {cache:'no-store'});
+      if (!r.ok) throw Error('State unavailable');
       const d = await r.json();
-      if (d.id !== taskId) throw Error('Mismatched task');
-      const status = document.getElementById('command-task-state');
-      const stage = document.getElementById('command-task-stage');
-      const connection = document.getElementById('command-connection');
-      if (status) {
-        const state = String(d.status || 'UNKNOWN');
-        status.textContent = state === 'DONE' && !accepted ? 'DONE · غير متحقق' : state;
-        status.dataset.state = state === 'DONE' && !accepted ? 'LEGACY_DONE' : state;
+      if (!d || !d.metrics || !Array.isArray(d.approvals)) throw Error('Invalid response');
+      const m = d.metrics;
+      setText('command-total', m.total);
+      setText('command-running', m.running);
+      setText('command-pending', m.approvals);
+      setText('command-approval-count', String(m.approvals) + ' معلّقة');
+      setText('command-health-worker', d.worker);
+      setText('command-health-verdict', d.verification?.verdict || 'NOT VERIFIED');
+      setText('command-health-stage', d.verification?.stage || '—');
+      setText('command-health-sha', d.verification?.sha || '—');
+      setText('command-health-failures', m.needs_work);
+      const verdict = byId('command-health-verdict');
+      if (verdict) verdict.className = d.accepted_final ? 'ok' : 'warn';
+      displayApprovals(d.approvals);
+      if (taskId && d.task?.id === taskId) {
+        const status = byId('command-task-state');
+        const stage = byId('command-task-stage');
+        const rawStatus = String(d.task.status || 'UNKNOWN');
+        if (status) {
+          status.dataset.state = rawStatus === 'DONE' && !d.accepted_final ? 'LEGACY_DONE' : rawStatus;
+          status.textContent = rawStatus === 'DONE' && !d.accepted_final
+            ? 'DONE · غير متحقق' : rawStatus;
+        }
+        if (stage) stage.textContent = String(d.task.stage || '—');
       }
-      if (stage) stage.textContent = String(d.next_stage || '—');
-      if (connection) connection.textContent = 'متصل · حالة فعلية';
+      setText('command-connection', 'متصل · بيانات النظام');
     } catch (_) {
-      const connection = document.getElementById('command-connection');
-      if (connection) connection.textContent = 'آخر حالة محفوظة · الاتصال متوقف';
-    } finally { inflight = false; }
+      setText('command-connection', 'الاتصال متوقف · آخر حالة محفوظة');
+    } finally {
+      inflight = false;
+    }
   };
   update();
   setInterval(update, 5000);
-  document.addEventListener('visibilitychange', () => {if (!document.hidden) update();});
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) update(); });
 })();
 """
 

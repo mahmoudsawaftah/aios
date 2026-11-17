@@ -284,7 +284,7 @@ def home_html(csrf: str, records: list[dict], *, focus: str | None = None) -> tu
         result += (
             '<div data-command-task="' + tid + '" data-accepted="'
             + ('true' if accepted_final else 'false') + '">'
-            '<div class="command-focus-heading"><a href="/ideas/' + tid +">'
+            '<div class="command-focus-heading"><a href="/ideas/' + tid + '">'
             + escape(active["title"]) + '</a>'
             '<span id="command-task-state" class="command-badge" data-state="'
             + ('LEGACY_DONE' if active["status"] == "DONE" and not accepted_final

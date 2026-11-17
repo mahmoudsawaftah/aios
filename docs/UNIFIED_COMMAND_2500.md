@@ -74,8 +74,7 @@ mutation routes are blocked. If tests fail, the preview launcher stops.
 ```powershell
 $preview = Join-Path $env:USERPROFILE 'Documents\ItemSpace-Command2500-Preview'
 if (Test-Path $preview) { throw 'Preview exists; inspect it before reuse' }
-git clone --single-branch --branch feat/item-space-v3-3-unified-command-2500 \
-  https://github.com/mahmoudsawaftah/aios.git $preview
+git clone --single-branch --branch feat/item-space-v3-3-unified-command-2500 https://github.com/mahmoudsawaftah/aios.git $preview
 if ($LASTEXITCODE -ne 0) { throw 'Clone failed' }
 & (Join-Path $preview 'LAUNCH_LIVE_STUDIO_READONLY.cmd') 'C:\Users\ENG_Mahmoud\Documents\aios'
 ```

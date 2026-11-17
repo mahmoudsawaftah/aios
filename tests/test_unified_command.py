@@ -174,9 +174,15 @@ class Command2500Tests(unittest.TestCase):
 
     def test_empty_first_run_can_expand_new_mission_via_click(self):
         js = ui_unified.COMMAND_JS
-        self.assertLess(js.index("document.querySelectorAll('a[href="),
-                        js.index("if (!root) return;"))
-        self.assertIn("target.open = true", js)
+        # New Mission and Agent Office controls must be registered even when
+        # the task database is empty (there is no selected task root).
+        self.assertIn("document.querySelectorAll('a[href=", js)
+        self.assertIn("const selected = root ? root.getAttribute", js)
+        self.assertIn("panel.open = true", js)
+        self.assertIn("if (panel && panel.tagName === 'DETAILS')", js)
+        self.assertNotIn("if (!root) return;", js)
+        # Do not issue a task-scoped read unless a real task ID was selected.
+        self.assertIn("const taskId = /^[0-9a-f]{12}$/.test(selected)", js)
 
     def test_collapsed_office_pauses_unnecessary_animation_and_polling(self):
         from factory import pixel_office

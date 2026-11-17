@@ -112,7 +112,7 @@ def page(title: str, content: str, csrf: str, *, auto_run: bool, message: str = 
         + '</style></head><body><main class="shell">'
         '<header class="topbar"><a class="brand" href="/" aria-label="item space AI homepage">'
         '<svg class="mark" viewBox="0 0 64 64" role="img" aria-label="Item Space AI logo"><defs><radialGradient id="orb" cx="28%" cy="25%"><stop stop-color="#dbf7ff"/><stop offset=".35" stop-color="#83b8ff"/><stop offset="1" stop-color="#6040b7"/></radialGradient></defs><circle cx="32" cy="32" r="17" fill="url(#orb)"/><ellipse cx="32" cy="33" rx="29" ry="11" fill="none" stroke="#72efff" stroke-width="3" transform="rotate(-26 32 33)"/><circle cx="54" cy="11" r="3" fill="#fff"/><circle cx="8" cy="18" r="2" fill="#b0a8ff"/></svg>'
-        '<span class="brand-text"><strong>item space AI</strong><small>MISSION CONTROL · AIOS V3</small></span></a>'
+        '<span class="brand-text"><strong>item space AI</strong><small>COMMAND DECK 2500 · AIOS V3.3</small></span></a>'
         '<nav class="topnav" aria-label="التنقل الرئيسي">'
         '<a href="/#workspace">مركز القيادة</a>'
         '<a class="nav-approval" href="/#approvals">الموافقات</a>'

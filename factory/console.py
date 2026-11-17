@@ -27,7 +27,7 @@ from factory.live_studio import (STUDIO_CSS, STUDIO_JS, preview_port, save_previ
 import json
 from factory.pixel_office import OFFICE_CSS, OFFICE_JS, office_html, office_snapshot
 from factory.ui_unified import (COMMAND_CSS, COMMAND_JS, home_html as unified_home_html,
-                                detail_html as unified_detail_html)
+                                detail_html as unified_detail_html, command_snapshot)
 
 HOST = "127.0.0.1"
 MAX_BODY = 8192
@@ -212,6 +212,12 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             return
         path = urlsplit(self.path).path
         try:
+            if path == "/command/state":
+                requested = parse_qs(urlsplit(self.path).query).get("task", [None])[0]
+                payload = json.dumps(command_snapshot(requested),
+                                     ensure_ascii=False).encode("utf-8")
+                self._send(200, payload, content_type="application/json; charset=utf-8")
+                return
             if path == "/command.js":
                 self._send(200, COMMAND_JS.encode("utf-8"),
                            content_type="application/javascript; charset=utf-8")

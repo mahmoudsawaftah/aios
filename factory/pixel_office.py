@@ -53,6 +53,8 @@ OFFICE_JS = r"""'use strict';
 (() => {
   const canvas = document.getElementById('office-canvas');
   if (!canvas) return;
+  const parentPanel = canvas.closest('details');
+  const isVisible = () => !document.hidden && (!parentPanel || parentPanel.open);
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
   const W = 1100, H = 610;
@@ -207,7 +209,7 @@ OFFICE_JS = r"""'use strict';
   }
   let busy=false;
   async function sync(){
-    if(busy||document.hidden)return;
+    if(busy||!isVisible())return;
     busy=true;
     try {
       const r=await fetch('/office/state',{cache:'no-store'});
@@ -219,10 +221,13 @@ OFFICE_JS = r"""'use strict';
       fetchError=false;
     }catch(_){fetchError=true;}finally{busy=false;updateUi();draw();}
   }
-  function loop(){if(!document.hidden){draw();}if(!reduced)setTimeout(()=>requestAnimationFrame(loop),1000/12);}
+  function loop(){if(isVisible()){draw();}if(!reduced)setTimeout(()=>requestAnimationFrame(loop),1000/12);}
   sync(); if(!reduced)requestAnimationFrame(loop);
   setInterval(sync,4000);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden){sync();draw();}});
+  if (parentPanel) parentPanel.addEventListener('toggle',()=>{
+    if (parentPanel.open) { sync(); draw(); }
+  });
+  document.addEventListener('visibilitychange',()=>{if(isVisible()){sync();draw();}});
 })();
 """
 

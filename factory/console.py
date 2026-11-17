@@ -26,6 +26,8 @@ from factory.live_studio import (STUDIO_CSS, STUDIO_JS, preview_port, save_previ
                                  studio_html, task_snapshot)
 import json
 from factory.pixel_office import OFFICE_CSS, OFFICE_JS, office_html, office_snapshot
+from factory.ui_unified import (COMMAND_CSS, COMMAND_JS, home_html as unified_home_html,
+                                detail_html as unified_detail_html, command_snapshot)
 
 HOST = "127.0.0.1"
 MAX_BODY = 8192
@@ -94,11 +96,11 @@ footer{padding:32px 4px 10px;color:#7285ac;font-size:11px;display:flex;justify-c
 @media(max-width:900px){.hero{grid-template-columns:1fr}.orbit{display:none}.grid{grid-template-columns:1fr}}
 @media(max-width:600px){.shell{padding:0 14px 28px}.topbar{min-height:76px}.brand-text strong{font-size:14px}.brand-text small{font-size:8px}.mark{width:42px;height:42px}.topright .pill:not(.online){display:none}.hero{padding:39px 0 26px}.stats{gap:8px}.stat{padding:13px}.stat .num{font-size:23px}.stat .desc{font-size:10px}.panel{padding:18px}.grid{gap:13px}footer{flex-direction:column}}
 """
-STYLE += CAMPUS_CSS + STUDIO_CSS + OFFICE_CSS
+STYLE += CAMPUS_CSS + STUDIO_CSS + OFFICE_CSS + COMMAND_CSS
 
 
 def page(title: str, content: str, csrf: str, *, auto_run: bool, message: str = "") -> bytes:
-    state = ('LIVE AGENT MODE' if auto_run else 'SAFE PREVIEW')
+    state = ('AUTO-RUN ENABLED' if auto_run else 'AUTO-RUN DISABLED')
     label = 'mode-on' if auto_run else 'mode-off'
     banner = '<div class="panel warn">' + escape(message) + '</div>' if message else ''
     return (
@@ -110,11 +112,11 @@ def page(title: str, content: str, csrf: str, *, auto_run: bool, message: str = 
         + '</style></head><body><main class="shell">'
         '<header class="topbar"><a class="brand" href="/" aria-label="item space AI homepage">'
         '<svg class="mark" viewBox="0 0 64 64" role="img" aria-label="Item Space AI logo"><defs><radialGradient id="orb" cx="28%" cy="25%"><stop stop-color="#dbf7ff"/><stop offset=".35" stop-color="#83b8ff"/><stop offset="1" stop-color="#6040b7"/></radialGradient></defs><circle cx="32" cy="32" r="17" fill="url(#orb)"/><ellipse cx="32" cy="33" rx="29" ry="11" fill="none" stroke="#72efff" stroke-width="3" transform="rotate(-26 32 33)"/><circle cx="54" cy="11" r="3" fill="#fff"/><circle cx="8" cy="18" r="2" fill="#b0a8ff"/></svg>'
-        '<span class="brand-text"><strong>item space AI</strong><small>MISSION CONTROL · AIOS V3</small></span></a>'
-        '<nav class="topnav" aria-label="التنقل الرئيسي"><a class="nav-approval" href="/#approvals">◈ الموافقات</a>'
-        '<a href="/office">مكتب الـAgents</a><a href="/#missions">المشاريع</a>'
-        '<a href="/#departments">الأقسام</a>'
-        '<a href="/#mission-intake">مشروع جديد</a></nav>'
+        '<span class="brand-text"><strong>item space AI</strong><small>COMMAND DECK 2500 · AIOS V3.3</small></span></a>'
+        '<nav class="topnav" aria-label="التنقل الرئيسي">'
+        '<a href="/#workspace">مركز القيادة</a>'
+        '<a class="nav-approval" href="/#approvals">الموافقات</a>'
+        '<a href="/#agents">الوكلاء</a></nav>'
         '<div class="topright"><span class="pill online">LOCAL NODE</span>'
         '<span class="pill ' + label + '">' + state + '</span></div></header>'
         + banner + content
@@ -129,112 +131,13 @@ def form_token(csrf: str) -> str:
 
 
 def home_html(csrf: str, records: list[dict]) -> str:
-    active = sum(r["status"] in ("PENDING", "RUNNING", "INTERRUPTED") for r in records)
-    waiting = sum(r["status"] == "WAITING_APPROVAL" for r in records)
-    result = (
-        campus_hero()
-        + approval_center(records)
-        +         '<div class="stats">'
-        '<div class="stat"><div class="num">' + str(len(records)) + '</div>'
-        '<div class="desc">TOTAL MISSIONS</div></div>'
-        '<div class="stat"><div class="num">' + str(active) + '</div>'
-        '<div class="desc">ACTIVE / QUEUED</div></div>'
-        '<div class="stat"><div class="num">' + str(waiting) + '</div>'
-        '<div class="desc">AWAITING APPROVAL</div></div></div>'
-        '<div class="grid mission-grid"><section class="panel" id="mission-intake">'
-        '<div class="panel-head"><h2>✦ إطلاق مهمة جديدة</h2><span class="tag">NEW MISSION</span></div>'
-        '<form method="post" action="/ideas">'
-        + form_token(csrf)
-        + '<label for="idea">ما هي فكرتك؟</label>'
-        '<textarea id="idea" name="idea" maxlength="4000" required '
-        'placeholder="مثال: أريد نظام حجوزات للصالونات بالعربية والإنجليزية، '
-        'مع إدارة العملاء والاشتراكات الشهرية..."></textarea>'
-        '<label for="title">اسم المشروع <span class="muted">(اختياري)</span></label>'
-        '<input id="title" name="title" maxlength="100" placeholder="مثال: Nova Booking">'
-        '<label for="methodology">طريقة التنفيذ</label>'
-        '<select id="methodology" name="methodology">'
-        '<option value="hybrid">Hybrid — هجين</option>'
-        '<option value="agile">Agile — مرن</option>'
-        '<option value="traditional">Traditional — تقليدي</option>'
-        '</select>'
-        '<button class="action" type="submit">◈ &nbsp; إنشاء مشروع ومهمة</button>'
-        '<p class="hint">وضع المعاينة لا يشغّل الذكاء الاصطناعي ولا ينشر أي شيء. '
-        'عند تفعيل العامل الآلي قد يتم إرسال المهمة إلى Codex ضمن حدود الاشتراك.</p>'
-        '</form></section>'
-        '<section class="panel" id="missions">'
-        '<div class="panel-head"><h2>◉ سجل المهام</h2><span class="tag">MISSION LOG</span></div>'
-        '<div class="tasks">'
-    )
-    if not records:
-        result += (
-            '<div class="empty"><span class="symbol">✧</span>'
-            'لا توجد مهام حتى الآن.<br>أطلق أول مهمة من النموذج المجاور.</div>'
-        )
-    else:
-        for r in records:
-            status = escape(r["status"], quote=True)
-            result += (
-                '<article class="task">'
-                '<a class="task-title" href="/ideas/' + escape(r["id"], quote=True)
-                + '">' + escape(r["title"]) + '</a>'
-                '<div class="task-meta"><span class="flag ' + status + '">'
-                + escape(r["status"]) + '</span><span>' + escape(r["stage"])
-                + '</span></div>'
-                '<p>' + escape(r["goal_preview"]) + '</p>'
-                '<a class="studio-open" href="/studio/' + escape(r["id"], quote=True)
-                + '">◈ افتح Live Studio ↗</a></article>'
-            )
-    return result + '</div></section></div>' + department_board(records)
+    """Compatibility wrapper for existing clients and unit tests."""
+    return unified_home_html(csrf, records)[0]
 
 
 def details_html(csrf: str, r: dict) -> str:
-    status = escape(r["status"], quote=True)
-    result = (
-        task_hero(r)
-        + stage_track(r)
-        + approval_panel(csrf, r)
-        +         '<a class="back" href="/">↩ العودة إلى مركز التحكم</a>'
-        '<a class="back" style="margin-inline-start:20px" href="/studio/'
-        + escape(r["id"], quote=True) + '">◈ Live Studio · معاينة حية</a>'
-        '<section class="panel detail-block">'
-        '<div class="panel-head"><h2>◈ سجل المهمة ' + escape(r["id"])
-        + '</h2><span class="flag ' + status + '">' + escape(r["status"]) + '</span></div>'
-        '<p class="muted">المرحلة التالية: <strong>' + escape(r["next_stage"]) + '</strong></p>'
-        '<p class="muted">المستودع المحلي: <code>' + escape(r["project"]) + '</code></p>'
-        '<h3>الفكرة الأصلية</h3><pre>' + escape(r["goal"]) + '</pre>'
-    )
-    if r["error"]:
-        result += '<p class="err">' + escape(r["error"]) + '</p>'
-    result += '</section>'
-    result += (
-        '<section class="panel detail-block"><div class="panel-head">'
-        '<h3>✦ أدوات المشروع</h3><span class="tag">LOCAL TOOLS</span></div>'
-        '<p class="hint">ابحث عن مشاريع GitHub مفتوحة المصدر، جهز مسودات التسويق، '
-        'أو افحص جاهزية مستودع GitHub. لا يتم النشر أو الإنفاق عبر هذه الأزرار.</p>'
-        '<form method="post" action="/ideas/' + escape(r["id"], quote=True)
-        + '/research">' + form_token(csrf)
-        + '<label>مصطلحات البحث (GitHub Public API)</label>'
-        '<input name="query" maxlength="150" placeholder="e.g. salon booking open source">'
-        '<button class="action" type="submit">⌕ بحث Open Source والتراخيص</button></form>'
-        '<form method="post" action="/ideas/' + escape(r["id"], quote=True)
-        + '/marketing">' + form_token(csrf)
-        + '<button class="action" type="submit">✦ تجهيز خطة تسويق ومسودات محتوى</button></form>'
-        '<form method="post" action="/ideas/' + escape(r["id"], quote=True)
-        + '/github-preflight">' + form_token(csrf)
-        + '<button class="action" type="submit">◈ فحص جاهزية GitHub PR</button></form>'
-        '</section>'
-    )
-    result += '<h2 id="reports">تقارير ومخرجات المراحل</h2>'
-    for output in r["outputs"]:
-        result += (
-            '<section class="panel detail-block"><div class="panel-head"><h3>'
-            + escape(output["stage"]) + '</h3><span class="tag">STAGE OUTPUT</span></div>'
-            '<pre>' + escape(output["content"]) + '</pre></section>'
-        )
-    result += '<section class="panel detail-block"><h3>◉ سجل الأحداث</h3><pre>'
-    for e in r["events"]:
-        result += escape(e["ts"] + "  " + e["event"] + "  " + e["info"][:180]) + '\n'
-    return result + '</pre></section>'
+    """Preserve approval gates but present outputs in a calm, grouped layout."""
+    return unified_detail_html(csrf, r)
 
 
 class ConsoleServer(ThreadingHTTPServer):
@@ -309,6 +212,16 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             return
         path = urlsplit(self.path).path
         try:
+            if path == "/command/state":
+                requested = parse_qs(urlsplit(self.path).query).get("task", [None])[0]
+                payload = json.dumps(command_snapshot(requested),
+                                     ensure_ascii=False).encode("utf-8")
+                self._send(200, payload, content_type="application/json; charset=utf-8")
+                return
+            if path == "/command.js":
+                self._send(200, COMMAND_JS.encode("utf-8"),
+                           content_type="application/javascript; charset=utf-8")
+                return
             if path == "/office.js":
                 self._send(200, OFFICE_JS.encode("utf-8"),
                            content_type="application/javascript; charset=utf-8")
@@ -337,7 +250,11 @@ class ConsoleHandler(BaseHTTPRequestHandler):
                              studio=True, frame_port=port)
                 return
             if path == "/":
-                self._render("AIOS Ideas", home_html(self.server.csrf, list_ideas()))
+                requested = parse_qs(urlsplit(self.path).query).get("task", [None])[0]
+                contents, frame_port = unified_home_html(
+                    self.server.csrf, list_ideas(), focus=requested)
+                self._render("Unified Command 2500", contents, studio=True,
+                             frame_port=frame_port)
                 return
             if path.startswith("/ideas/") and path.count("/") == 2:
                 self._render("AIOS Task", details_html(self.server.csrf, idea_detail(path.split("/")[-1])))

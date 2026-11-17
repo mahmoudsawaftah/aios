@@ -156,6 +156,34 @@ class Command2500Tests(unittest.TestCase):
         self.assertIn('id="mission-intake"', html)
         self.assertIn("لا توجد موافقات", html)
 
+    def test_historical_done_without_final_acceptance_is_not_green(self):
+        html, _ = self.render([mission("DONE")])
+        self.assertIn('data-state="LEGACY_DONE"', html)
+        self.assertIn("DONE · غير متحقق", html)
+        self.assertIn("NOT VERIFIED", html)
+
+    def test_final_acceptance_is_needed_for_verified_done_badge(self):
+        with patch.object(ui_unified, "preview_port", return_value=None), patch.object(
+                ui_unified, "worker_state", return_value="IDLE"), patch.object(
+                ui_unified, "_verification", return_value={
+                    "verdict": "ACCEPTED", "stage": "final", "sha": "f"*12}):
+            html, _ = ui_unified.home_html("token", [mission("DONE")])
+        self.assertIn('data-state="DONE"', html)
+        self.assertNotIn("DONE · غير متحقق", html)
+        self.assertIn('data-accepted="true"', html)
+
+    def test_empty_first_run_can_expand_new_mission_via_click(self):
+        js = ui_unified.COMMAND_JS
+        self.assertLess(js.index("document.querySelectorAll('a[href="),
+                        js.index("if (!root) return;"))
+        self.assertIn("target.open = true", js)
+
+    def test_collapsed_office_pauses_unnecessary_animation_and_polling(self):
+        from factory import pixel_office
+        self.assertIn("canvas.closest('details')", pixel_office.OFFICE_JS)
+        self.assertIn("!isVisible()", pixel_office.OFFICE_JS)
+        self.assertIn("if(isVisible()){draw();}", pixel_office.OFFICE_JS)
+
     def test_command_js_uses_safe_text_without_inserting_html(self):
         self.assertNotIn("innerHTML", ui_unified.COMMAND_JS)
         self.assertIn("textContent", ui_unified.COMMAND_JS)

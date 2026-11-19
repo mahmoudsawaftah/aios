@@ -13,9 +13,13 @@ projects/*
 *.pem
 *.key
 
-# ECC is installed, not authored here
+# ECC generated files are installed, not authored here
 .claude/
 .agents/
+!.agents/skills/
+.agents/skills/*
+!.agents/skills/aios-*/
+!.agents/skills/aios-*/SKILL.md
 
 # Volatile
 raw/scratch/

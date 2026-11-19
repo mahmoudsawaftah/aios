@@ -1,6 +1,6 @@
 # AIOS — Item Space Edition
 
-نسخة Codex-first نظيفة لتطوير Item Space داخل Antigravity، مع إجراءات وأدوار للمشروع وسجل خطة واحد. بُنيت على الدروس المفيدة من AIOS الأصلي، مع استبعاد النسخ الاحتياطية والكاش والملفات التجريبية غير اللازمة لسير العمل داخل Codex.
+نسخة Codex-first نظيفة لتطوير Item Space داخل Antigravity، مع إجراءات وأدوار للمشروع وسجل خطة واحد. أُخذت الدروس المفيدة من AIOS الأصلي، وتوثقت حالة مصنع البرمجيات القديم وحدوده في `docs/ORIGINAL_AIOS_REFERENCE.md`. النسخة لا تنسخ النسخ الاحتياطية أو الكاش أو runtime التجريبي إلى مسار العمل النشط.
 
 ## ابدأ من هنا
 1. فك النسخة في مجلد جديد وافتح جذر AIOS في Antigravity.
@@ -16,6 +16,7 @@
 - `.agents/skills/`: مهارات Codex المتخصصة.
 - `docs/AIOS_OPERATING_MODEL.md`: سير العمل، الأدلة، وبوابات المراجعة.
 - `docs/CAPABILITIES_AND_LIMITS.md`: ما يفعله هذا الإصدار وما لا يشغله.
+- `docs/ORIGINAL_AIOS_REFERENCE.md`: ملخص موثق لمحتوى AIOS الأصلي ومخاطر runtime القديم.
 - `projects/Item Space/Item Space.md`: ملف فارغ كبداية.
 
 ## جذر Git

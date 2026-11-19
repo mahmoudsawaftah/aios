@@ -99,7 +99,7 @@ When responding to any request, follow this sequence:
 ## 8. Non-Negotiable Guardrails
 
 1. **Secrets Live Only in `.env`**: Never inline a password, token, key, or connection string in a script, commit, or chat message. `.env` is gitignored everywhere. `.env.example` contains variable names only.
-2. **Projects Are Independent Repositories**: Each folder in `projects/` is its own Git repo. Never commit or push across repo boundaries. Never modify project code without explicit approval.
+2. **Projects Are Independent Repositories**: Each folder in `projects/` is its own Git repo. Never commit or push across repo boundaries. A task request authorizes edits inside its stated project and scope. Ask before destructive actions, production/live changes, external side effects (push, merge, deploy), permission changes, secret handling, or work outside the requested scope.
 3. **`vault/` is an NTFS Junction**: Writing to `aios/vault/` modifies the live Obsidian vault. Exclude `vault/` from all recursive scans. Never commit it to Git.
 4. **End-of-Session Push**: At the end of any session that modified files in `aios/` (outside `projects/` and `vault/`), stage, commit with a conventional commit message, and push to GitHub.
 5. **Confirm Destructive Actions**: Always ask before deleting files, dropping tables, or running mutating actions on production/live services.

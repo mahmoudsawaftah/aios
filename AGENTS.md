@@ -79,7 +79,7 @@ When responding to any request, follow this sequence:
 
 ---
 
-## 6. Harvested Conventions from Moe's Real Projects
+## 7. Harvested Conventions from Moe's Real Projects
 
 - **Next.js 16 Breaking Changes**: Next.js 16 / React 19 introduce significant App Router breaking changes and new server/client boundaries. Before writing code, verify conventions against `node_modules/next/dist/docs/` or Next.js official documentation.
 - **WorkMerit Bilingual Design Standards**: WorkMerit (`projects/AMG/`) utilizes a locked Split Studio / Workbench design system with specific OKLCH color tokens, bidirectional English/Arabic support, and server-authoritative assessment isolation. Do not invent ad-hoc palettes or client-bundle server assessment logic.

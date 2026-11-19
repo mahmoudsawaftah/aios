@@ -5,7 +5,7 @@ Make AIOS task skills discoverable when Codex is opened inside an existing indep
 
 ## Choose the scope
 - Use project scope when the skills should be available only to one project. Install them under that repository's `.agents/skills/`.
-- Use Codex user scope when the same skills should be available across repositories. Install under the user's `~/.agents/skills/` directory.
+- Use Codex user scope when the same skills should be available across repositories. Install under the user's `~/.agents/skills/` directory (on Windows, `%USERPROFILE%\\.agents\\skills\\`).
 - Keep AIOS as the canonical source; project or user-scope copies are installed copies.
 
 ## Project-scoped install
@@ -16,7 +16,7 @@ Make AIOS task skills discoverable when Codex is opened inside an existing indep
 5. In Codex, run `/skills` and confirm the expected `aios-*` names appear. If not, check that Codex is open at the project root and refresh/reopen the workspace.
 
 ## User-scoped install
-1. Copy the desired skill folders into `~/.agents/skills/` without nesting an extra `skills` directory.
+1. Copy the desired skill folders into `~/.agents/skills/` (on Windows, `%USERPROFILE%\\.agents\\skills\\`) without nesting an extra `skills` directory.
 2. Refresh Codex and run `/skills` to confirm discovery.
 3. User-scoped skills apply more broadly; keep their routing and instructions suitable across all projects.
 

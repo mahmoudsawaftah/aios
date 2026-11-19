@@ -54,7 +54,21 @@ Do not improvise complex multi-step tasks by typing ad-hoc commands:
 
 ---
 
-## 5. Request Routing Decision Tree
+## 5. Codex Workflow and Skill Routing
+
+Codex skills are reusable task procedures stored as `.agents/skills/<name>/SKILL.md`.
+The canonical AIOS skills are under `.agents/skills/aios-*`; project repositories are independent, so they do not discover skills from this parent repository. New projects receive project-local copies from `projects/_template/.agents/skills/`. For an existing project, install the needed skill under that project's `.agents/skills/` or the user's `~/.agents/skills/`, then confirm discovery with `/skills`.
+
+Route Codex work as follows:
+- New feature or behavior change: use `$aios-plan` when the task spans more than 3 files, changes architecture/data/security boundaries, or has multiple dependent stages; then use `$aios-implement`.
+- Bug or failing check: use `$aios-debug`, then `$aios-implement` for the agreed fix.
+- Before reporting completion: use `$aios-verify`. Read the target project's own `AGENTS.md`, package scripts, and CI first; run only applicable real commands and report their output.
+- Before commit or PR: use `$aios-review`.
+- At session end: use `$aios-session-log` to update an existing project tracker or session note.
+
+Skills guide behavior; they are not security controls. If a skill is missing from `/skills`, follow this routing manually and repair skill installation separately.
+
+## 6. Request Routing Decision Tree
 
 When responding to any request, follow this sequence:
 1. **Is there a directive?** Check the project's `directives/` first, then `aios/directives/`. If one exists, follow its execution sequence.
@@ -65,7 +79,7 @@ When responding to any request, follow this sequence:
 
 ---
 
-## 6. Harvested Conventions from Moe's Real Projects
+## 7. Harvested Conventions from Moe's Real Projects
 
 - **Next.js 16 Breaking Changes**: Next.js 16 / React 19 introduce significant App Router breaking changes and new server/client boundaries. Before writing code, verify conventions against `node_modules/next/dist/docs/` or Next.js official documentation.
 - **WorkMerit Bilingual Design Standards**: WorkMerit (`projects/AMG/`) utilizes a locked Split Studio / Workbench design system with specific OKLCH color tokens, bidirectional English/Arabic support, and server-authoritative assessment isolation. Do not invent ad-hoc palettes or client-bundle server assessment logic.
@@ -85,7 +99,7 @@ When responding to any request, follow this sequence:
 ## 8. Non-Negotiable Guardrails
 
 1. **Secrets Live Only in `.env`**: Never inline a password, token, key, or connection string in a script, commit, or chat message. `.env` is gitignored everywhere. `.env.example` contains variable names only.
-2. **Projects Are Independent Repositories**: Each folder in `projects/` is its own Git repo. Never commit or push across repo boundaries. Never modify project code without explicit approval.
+2. **Projects Are Independent Repositories**: Each folder in `projects/` is its own Git repo. Never commit or push across repo boundaries. A task request authorizes edits inside its stated project and scope. Ask before destructive actions, production/live changes, external side effects (push, merge, deploy), permission changes, secret handling, or work outside the requested scope.
 3. **`vault/` is an NTFS Junction**: Writing to `aios/vault/` modifies the live Obsidian vault. Exclude `vault/` from all recursive scans. Never commit it to Git.
 4. **End-of-Session Push**: At the end of any session that modified files in `aios/` (outside `projects/` and `vault/`), stage, commit with a conventional commit message, and push to GitHub.
 5. **Confirm Destructive Actions**: Always ask before deleting files, dropping tables, or running mutating actions on production/live services.

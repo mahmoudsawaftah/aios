@@ -22,9 +22,11 @@ ECC provides **292 skills, 68 agents, and 94 commands** designed for full-stack 
 It is installed project-scoped under `aios` so that your global user configuration remains clean and reproducible.
 
 ### Scoped Installation Paths
-- **Claude Code**: `./.claude/skills/` and `./.claude/agents/`
-- **Antigravity**: `./.agents/skills/` and `./.agents/rules/`
-- **Git status**: Both `.claude/skills/` and `.claude/agents/` are **gitignored** in `aios/.gitignore`. They are generated artifacts easily restored from a single command.
+- **Codex project skills**: `.agents/skills/<skill-name>/SKILL.md` in the project root.
+- **Codex user skills**: `~/.agents/skills/<skill-name>/SKILL.md` (Windows: `%USERPROFILE%\\.agents\\skills\\<skill-name>\\SKILL.md`), available across projects.
+- **AIOS-authored Codex skills**: `.agents/skills/aios-*/SKILL.md` are versioned in this repository; ECC-generated `.agents/` artifacts remain ignored.
+- **Project template**: New independent repositories copy the skills into `projects/_template/.agents/skills/`. Existing project repositories must install the needed skills in their own root or the Codex user-scope directory.
+- **Discovery check**: In Codex, run `/skills` and confirm the expected skill names. If missing, restart/refresh Codex after copying and check the path; AIOS parent skills are not inherited across repository boundaries.
 
 ### Rebuild & Health Commands
 - Check installation health:

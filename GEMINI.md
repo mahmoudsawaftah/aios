@@ -5,5 +5,5 @@ Read `AGENTS.md` — it applies in full as the canonical instructions for this w
 ## Antigravity Environment Notes
 - **Shared Memory**: Reachable at relative path `vault/memory/MEMORY.md`. Read the index at session start and inspect only relevant memory notes.
 - **Workflow & Rules**: Follow the DOE workflow (`docs/doe.md`) and the 20 operating rules (`docs/operating-rules.md`).
-- **Project Structure**: When working in a project under `projects/<name>/`, remember each project is an independent repository. Never modify project code without explicit approval.
+- **Project Structure**: When working in a project under `projects/<name>/`, remember each project is an independent repository. A task request authorizes edits within its stated scope. Ask before destructive actions, production/live changes, push/merge/deploy, permission changes, or work outside scope.
 - **Precedence**: `AGENTS.md` strictly takes precedence over any generic defaults.

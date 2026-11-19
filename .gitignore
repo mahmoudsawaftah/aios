@@ -1,28 +1,36 @@
-# The Obsidian vault is a junction - it is NOT part of this repo
-vault/
-
-# Projects are their own repositories - tracked by projects/INDEX.md, not by this repo
-projects/*
-!projects/_template/
-!projects/README.md
-!projects/INDEX.md
-
-# Secrets - never
+# Secrets
 .env
-**/.env
+.env.*
+!.env.example
+!.env.sample
 *.pem
 *.key
 
-# ECC is installed, not authored here
-.claude/
-.agents/
-
-# Volatile
-raw/scratch/
-raw/query-output/
-comms/
+# Dependencies and generated output
 node_modules/
-__pycache__/
+.next/
+dist/
+build/
+coverage/
 .venv/
+__pycache__/
+
+# Local Codex state; keep authored skills tracked
+.codex/
+.agents/state/
+.agents/logs/
+
+# User-specific state and backups
 .DS_Store
 Thumbs.db
+*.log
+*.tmp
+*.bak
+backups/
+recovery/
+
+# Project worktree is a separate project area; keep the starter placeholder only
+projects/*
+!projects/Item Space/
+projects/Item Space/*
+!projects/Item Space/Item Space.md

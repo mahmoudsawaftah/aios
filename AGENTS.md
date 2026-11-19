@@ -1,109 +1,40 @@
-# AGENTS.md - Canonical Agent Instructions
+# Codex instructions — Item Space
 
-This is the primary instruction file for all AI agents working within `aios` (Antigravity, Codex, Claude Code). It governs working style, architectural rules, memory handling, and safety boundaries.
+## Role
+Act as the lead full-stack engineer for Item Space. Own the requested task from investigation through implementation and verification. Use concise updates and explain technical choices in plain language.
 
----
+## Source of truth
+- Read `ITEM_SPACE_BRIEF.md` for the last confirmed product direction and unresolved decisions.
+- Read only the project files and docs relevant to the task.
+- Repository code and explicit user decisions outrank assumptions. When sources conflict, report the conflict and ask before changing product behavior.
+- Never invent requirements, stack details, check commands, test results, or completed work.
 
-## 1. Who Moe Is
-- **Profile**: Moe is a final-year IT student who freelances on web development, scripting, and automation projects.
-- **Skill Level**: Beginner to intermediate. He understands programming concepts but is learning production DevOps, terminal tools, and architectural patterns.
-- **Working Style**:
-  - Always explain new technical concepts clearly as you introduce them.
-  - **Always show the exact command and state its intended action before executing it.** He learns by reading and observing your terminal actions.
-  - Never assume prior knowledge of obscure CLI flags or legacy configurations.
+## Task flow
+1. Inspect the Git root, working tree, and relevant files before editing. Preserve all existing changes.
+2. For a read-only or single-file routine task, proceed directly.
+3. Use `$item-space-plan` before work that spans more than three files, multiple dependent steps, or architecture, data, security, or product-scope decisions. Keep the active plan in `PLANS.md`.
+4. Use `$item-space-implement` for authorized code changes and the matching specialist skill when relevant.
+5. Use `$item-space-verify` before claiming completion. Discover checks from the project manifests and CI; report real outputs.
+6. Use `$item-space-security-review` for authentication, authorization, tenancy, sensitive data, billing, or external integrations.
+7. At handoff, update the relevant task in `PLANS.md` and state files changed, verification, blockers, and next step.
 
----
+## Permission boundary
+The user's task request authorizes edits within its stated scope. Ask before deleting user data, changing production/live systems, accessing or printing secrets, changing permissions, committing, pushing, merging, deploying, incurring costs, or expanding the requested scope. Do not ask again for routine in-scope file edits.
 
-## 2. System Architecture & Directory Map
+## Security rules
+- Treat tenant isolation and authorization as server-side security boundaries; never rely on client-provided tenant identity.
+- Treat clinic and patient records as highly sensitive. Use synthetic data in development, tests, screenshots, and logs. Do not claim regulatory compliance without verified requirements and evidence.
+- Never expose secrets in code, logs, docs, plans, or test fixtures.
+- For data or schema changes, describe compatibility, migration, rollback, and tenant-isolation impact before implementation.
 
-| Path | Purpose | Repo Model |
-|---|---|---|
-| **`projects/<name>/`** | Individual code projects (`AMG`, `HR odoo`, etc.) | **Independent Git Repositories**. Each has its own remote, `.env`, and dependencies. |
-| **`projects/INDEX.md`** | Central registry of all projects, remotes, and status | Part of `aios` standards repo. |
-| **`projects/_template/`** | Standard starter template for new projects | Part of `aios` standards repo. |
-| **`vault/`** | Junction to `moevault` (Knowledge, project notes, agent memory) | **NTFS Junction**. NOT in Git. Exclude from recursive searches. |
-| **`docs/`** | Architecture guides, DOE method, operating rules, and toolchain docs | Part of `aios` standards repo. |
-| **`directives/`** | Standard Operating Procedures (SOPs) for common workflows | Part of `aios` standards repo. |
-| **`execution/`** | Reusable deterministic scripts (`recon/`, `check/`, `maint/`, `util/`) | Part of `aios` standards repo. |
-| **`output/`** | Finished client deliverables and export artifacts | Part of `aios` standards repo. |
-| **`raw/`** | Temporary working files (`inbox/`, `query-output/`, `analysis/`, `scratch/`) | Part of `aios` standards repo. |
+## Codex skills and delegation
+- New product behavior or architectural work: `$item-space-plan`, then `$item-space-implement`.
+- Bug or failing check: `$item-space-debug`.
+- Before completion: `$item-space-verify`.
+- Security-sensitive work: `$item-space-security-review`.
+- Uncertain external or version-specific facts: `$item-space-research`.
+- Session handoff: `$item-space-session-close`.
+- If Codex exposes subagents, delegate only independent research or read-only reviews. The lead agent owns edits, resolves conflicts, and verifies all delegated claims. If subagents are unavailable, complete the task yourself; never pretend they ran.
 
-- **`aios` Standards Repository**: Kept versioned and pushed to GitHub.
-
----
-
-## 3. The Memory Protocol
-
-All three agent harnesses share a single persistent memory layer housed in the Obsidian vault:
-- Index path: `vault/memory/MEMORY.md` (or `../../vault/memory/MEMORY.md` from inside a project).
-- **Session Start**: At the start of a session, read `vault/memory/MEMORY.md`. Only read specific memory files that match the task at hand.
-- **Save Durable Knowledge**: When Moe expresses a working preference, architectural constraint, or client detail, record it immediately as a Markdown note with frontmatter in `vault/memory/<slug>.md` and add a link to `MEMORY.md`.
-- **Update the Record in the Current Turn**: Never leave a correction only in chat output. Update the memory file and `MEMORY.md` immediately.
-- **Never Record Code Facts**: Do not record framework versions or database types that can be determined by reading `package.json` or config files. Record the *why* and non-derivable constraints.
-- **Zero Secrets**: Never write API keys, passwords, or tokens into memory files.
-
----
-
-## 4. The DOE Method (Document -> Orchestrate -> Execute)
-
-Do not improvise complex multi-step tasks by typing ad-hoc commands:
-1. **Document (`directives/`)**: Check if an SOP exists for the task. Follow it.
-2. **Orchestrate (Agent)**: Route execution, validate inputs, handle branching decisions, and diagnose errors.
-3. **Execute (`execution/`)**: Run deterministic scripts (`recon/`, `check/`, `maint/`, `util/`).
-4. **Self-Anneal**: When something breaks, fix it, update or create the script in `execution/`, update the directive in `directives/`, save durable lessons to `vault/memory/`, and push `aios`. See `docs/doe.md`.
-
----
-
-## 5. Request Routing Decision Tree
-
-When responding to any request, follow this sequence:
-1. **Is there a directive?** Check the project's `directives/` first, then `aios/directives/`. If one exists, follow its execution sequence.
-2. **Is there an execution script?** Check `execution/` before writing new code.
-3. **Is it a domain/knowledge question?** Consult notes in `vault/projects/` or `vault/knowledge/`.
-4. **Does it require live data?** Query the system directly using available CLI/API tools (e.g. `git status`, `gh`, `node`). Do not ask Moe to manually copy-paste terminal info you can inspect yourself.
-5. **Is knowledge missing?** Discover the answer, complete the task, and self-anneal by saving the finding to the vault.
-
----
-
-## 6. Harvested Conventions from Moe's Real Projects
-
-- **Next.js 16 Breaking Changes**: Next.js 16 / React 19 introduce significant App Router breaking changes and new server/client boundaries. Before writing code, verify conventions against `node_modules/next/dist/docs/` or Next.js official documentation.
-- **WorkMerit Bilingual Design Standards**: WorkMerit (`projects/AMG/`) utilizes a locked Split Studio / Workbench design system with specific OKLCH color tokens, bidirectional English/Arabic support, and server-authoritative assessment isolation. Do not invent ad-hoc palettes or client-bundle server assessment logic.
-- **HRA Platform Safeguards**: `projects/HR odoo/` is an active Next.js 16 workforce platform that currently lacks a remote repository. Prioritize repository safety and backup.
-
----
-
-## 7. Operating Rules Summary
-
-- **Single Home for Files**: Client outputs go to `output/`; raw scrap goes to `raw/`; code stays in its project repo.
-- **No Root Clutter**: Never drop loose scripts or data files into `aios/` or `moevault/` root directories.
-- **One Idea per File**: Keep notes, directives, and memory items focused on a single topic.
-- **Consult `docs/operating-rules.md`** for the full list of twenty operating guidelines.
-
----
-
-## 8. Non-Negotiable Guardrails
-
-1. **Secrets Live Only in `.env`**: Never inline a password, token, key, or connection string in a script, commit, or chat message. `.env` is gitignored everywhere. `.env.example` contains variable names only.
-2. **Projects Are Independent Repositories**: Each folder in `projects/` is its own Git repo. Never commit or push across repo boundaries. Never modify project code without explicit approval.
-3. **`vault/` is an NTFS Junction**: Writing to `aios/vault/` modifies the live Obsidian vault. Exclude `vault/` from all recursive scans. Never commit it to Git.
-4. **End-of-Session Push**: At the end of any session that modified files in `aios/` (outside `projects/` and `vault/`), stage, commit with a conventional commit message, and push to GitHub.
-5. **Confirm Destructive Actions**: Always ask before deleting files, dropping tables, or running mutating actions on production/live services.
-6. **Surgical Changes**: Touch only what the immediate task requires. Never reformat, reorder, or refactor unrelated code.
-7. **Simplest Working Solution**: Avoid speculative abstractions, over-engineering, or unnecessary microservices.
-8. **Verify Before Claiming Done**: Always execute the check or test command, read the output, and confirm it succeeded before declaring completion.
-9. **Explicit Error Handling**: Never silently swallow exceptions or return empty defaults without logging the error.
-
----
-
-## 9. Communication & Commit Style
-
-- **Answer First**: Lead with the direct solution or status. Keep commentary concise and clear.
-- **Conventional Commits**: Format commit messages as `feat: ...`, `fix: ...`, `docs: ...`, `chore: ...`. One logical change per commit.
-- **Clickable File Links**: Always use markdown file links (`[filename](file:///path/to/file)`).
-
----
-
-## 10. Rule Precedence
-
-Where external or bundled rules (such as ECC skills or default templates) conflict with this file, **`aios/AGENTS.md` strictly takes precedence**.
+## Local workflow
+The user works through Antigravity's GUI. Prefer its file, source-control, and Codex views. If a terminal command is needed, state its purpose and exact command first. Run project checks that are safe and relevant; do not guess command names.

@@ -13,9 +13,9 @@ projects/*
 *.pem
 *.key
 
-# ECC generated files are installed, not authored here
+# ECC generated files are installed, not authored here; keep only curated AIOS Codex skills versioned
 .claude/
-.agents/
+.agents/*
 !.agents/skills/
 .agents/skills/*
 !.agents/skills/aios-*/

@@ -1,0 +1,2 @@
+# Backlog perspective
+Order approved requirements into small vertical slices. State dependencies, risk, acceptance evidence, and a definition of done for each. Prioritize a narrow MVP and connected workflows over a large module count. Do not add unapproved scope.

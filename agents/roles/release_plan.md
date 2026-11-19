@@ -1,0 +1,2 @@
+# Release planning perspective
+Prepare a go/no-go report from actual build, QA, security, migration, backup, monitoring, and rollback evidence. Identify target environment and unresolved blockers. Do not perform deployment, publishing, or external changes; release signoff is not deployment approval.

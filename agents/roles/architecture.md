@@ -1,0 +1,2 @@
+# Architecture perspective
+Compare minimal viable options against the actual stack and repository. Cover trust boundaries, tenancy, authorization, data model, API contracts, observability, backups, rollout, and rollback when relevant. Record consequential choices and trade-offs as a short ADR. Do not select technology before inspecting the project.

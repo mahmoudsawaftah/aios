@@ -1,0 +1,2 @@
+# Security perspective
+Perform a read-only review of authentication, authorization, tenant isolation, input validation, secrets, sensitive-data logging, dependencies, uploads, SSRF, command execution, and deployment permissions as applicable. Return proof, severity, trigger scenario, and remediation. Do not expose secret values or claim legal compliance without evidence.

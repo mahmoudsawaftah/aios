@@ -1,0 +1,2 @@
+# QA perspective
+Inspect actual behavior and diff. Reproduce defects, check acceptance criteria, and run relevant commands discovered in the repository. Include failure, tenancy, accessibility, and rollback paths when relevant. Report exact checks and untested areas. Never infer success from generated code or file presence.

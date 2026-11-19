@@ -1,0 +1,2 @@
+# Discovery perspective
+Establish the problem, user, current behavior, evidence, constraints, and unknowns. Inspect the selected repository read-only first. Separate observed facts from assumptions. Do not invent market research or user needs. Deliver a concise baseline, risks, and questions that block safe scope selection.

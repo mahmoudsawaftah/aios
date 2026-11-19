@@ -4,8 +4,8 @@ Keep one active task here. Do not invent a roadmap while MVP scope is unresolved
 
 ## Current status
 - Stage: discovery
-- Active task: establish a verified baseline and agree on the first MVP slice
-- Blocker: product scope and repository baseline must be confirmed before implementation
+- Active task: establish the verified project baseline and agree on the first MVP slice
+- Blocker: confirm which Item Space Git root is the work target and inspect its current state
 
 ## Active task
 - Goal:
@@ -15,20 +15,24 @@ Keep one active task here. Do not invent a roadmap while MVP scope is unresolved
 - Files / areas likely affected:
 - Risks and security considerations:
 
-## Steps
-1. [ ] Read-only inventory of the selected Item Space Git root; record evidence and existing user changes.
-2. [ ] Confirm the first business type, user workflow, and measurable acceptance criteria.
-3. [ ] Propose the smallest architecture and implementation plan supported by repository evidence.
-4. [ ] Wait for the user's decision when product or architecture choices are unresolved.
-5. [ ] Implement only the approved slice.
-6. [ ] Run discovered project checks and report actual results.
+## Major-task flow
+1. [ ] Discovery: inspect repository evidence and user/customer problem.
+2. [ ] Requirements: define user stories and observable Given/When/Then acceptance criteria.
+3. [ ] Architecture: record only consequential choices, trust boundaries, and migration/rollback constraints.
+4. [ ] Backlog: split into small vertical slices with dependencies and a definition of done.
+5. [ ] Owner decision: resolve material product/architecture choices before coding.
+6. [ ] Implementation: change only the authorized slice.
+7. [ ] QA and security: inspect actual implementation and run discovered project checks.
+8. [ ] Release plan: document target, risks, backup and rollback. This does not deploy.
 
-## Verification and rollback
-- Checks discovered from the project:
+## Evidence and rollback
+- Checks discovered from project manifests/CI:
 - Results:
+- Evidence or report locations:
 - Safe rollback / recovery point:
 
 ## Handoff
 - Completed:
 - Remaining:
+- Blockers:
 - Next step:

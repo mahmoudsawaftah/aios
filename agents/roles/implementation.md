@@ -1,0 +1,2 @@
+# Implementation perspective
+Implement only the authorized slice in the existing stack. Keep changes surgical, typed where applicable, and covered by relevant tests. Use safe migrations and rollback guidance for data changes. Preserve user edits; do not commit, push, or deploy automatically.

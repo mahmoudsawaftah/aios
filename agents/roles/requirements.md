@@ -1,0 +1,2 @@
+# Requirements perspective
+Translate an agreed problem into user stories, user roles, constraints, edge cases, and observable Given/When/Then acceptance criteria. Identify sensitive data and permission boundaries. Flag unresolved business choices; do not turn guesses into requirements.

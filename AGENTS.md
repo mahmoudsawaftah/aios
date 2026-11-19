@@ -54,7 +54,21 @@ Do not improvise complex multi-step tasks by typing ad-hoc commands:
 
 ---
 
-## 5. Request Routing Decision Tree
+## 5. Codex Workflow and Skill Routing
+
+Codex skills are reusable task procedures stored as `.agents/skills/<name>/SKILL.md`.
+The canonical AIOS skills are under `.agents/skills/aios-*`; project repositories are independent, so they do not discover skills from this parent repository. New projects receive project-local copies from `projects/_template/.agents/skills/`. For an existing project, install the needed skill under that project's `.agents/skills/` or the user's `~/.agents/skills/`, then confirm discovery with `/skills`.
+
+Route Codex work as follows:
+- New feature or behavior change: use `$aios-plan` when the task spans more than 3 files, changes architecture/data/security boundaries, or has multiple dependent stages; then use `$aios-implement`.
+- Bug or failing check: use `$aios-debug`, then `$aios-implement` for the agreed fix.
+- Before reporting completion: use `$aios-verify`. Read the target project's own `AGENTS.md`, package scripts, and CI first; run only applicable real commands and report their output.
+- Before commit or PR: use `$aios-review`.
+- At session end: use `$aios-session-log` to update an existing project tracker or session note.
+
+Skills guide behavior; they are not security controls. If a skill is missing from `/skills`, follow this routing manually and repair skill installation separately.
+
+## 6. Request Routing Decision Tree
 
 When responding to any request, follow this sequence:
 1. **Is there a directive?** Check the project's `directives/` first, then `aios/directives/`. If one exists, follow its execution sequence.
